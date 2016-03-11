@@ -4,10 +4,21 @@ import requests
 import urllib2
 # import shutil
 import os
+# ConfigParser 用于从.ini文件中读取信息的
+import ConfigParser
 
 import pytesseract
 from PIL import Image
 
+
+config_file = 'config.ini'
+config_item_info = 'info'
+
+def get_item_from_ini():
+	cf = ConfigParser.ConfigParser()
+    cf.read(config_file)
+    username = cf.get(config_item_info, 'username')
+    password = cf.get(config_item_info, 'password')
 
 url_captcha = "http://gs.cqupt.edu.cn:8080/Public/ValidateCode.aspx"
 file_captcha = "captcha.png"
@@ -16,8 +27,8 @@ url_payload = {
 	"__EVENTARGUMENT":
 	"__VIEWSTATE": "/wEPDwUKMTA4ODc5NDc0OA9kFgJmD2QWAgIDD2QWAgIDD2QWAgILD2QWAmYPZBYCAgEPDxYCHghJbWFnZVVybAUrfi9QdWJsaWMvVmFsaWRhdGVDb2RlLmFzcHg/aW1hZ2U9MjAwODQ2NTQ5NWRkGAEFHl9fQ29udHJvbHNSZXF1aXJlUG9zdEJhY2tLZXlfXxYBBSFjdGwwMCRjb250ZW50UGFyZW50JFZhbGlkYXRlSW1hZ2U="
 	"__EVENTVALIDATION": "/wEdAAZ25z2YGnHhHaodt21WSyV/cybtMhw0mn0LtKqAHeD/6LR/VkzxozH4tyiImdrtlAcUWWYub4JHktVQEGONTxqoRZzhTcnfFsWcwOVyhy6aT8GiwGHwM4Wl4obxma9ASls=
-	"ctl00$contentParent$UserName": "s150231003"
-	"ctl00$contentParent$PassWord": "HBJMcqq2215746"
+	"ctl00$contentParent$UserName": username
+	"ctl00$contentParent$PassWord": password
 	"ctl00$contentParent$ValidateCode": "2222"
 }
 
