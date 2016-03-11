@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 '''
-网络爬虫之用户名密码及验证码登陆：爬取知乎网站
+模拟学生登录研究生管理系统
 '''
 import requests
 import ConfigParser
+from IPython.display import Image
 
 def create_session():
     cf = ConfigParser.ConfigParser()
@@ -33,22 +34,9 @@ def create_session():
         'Host': 'gs.cqupt.edu.cn:8080',
         'Referer': 'http://gs.cqupt.edu.cn:8080/gstudent/default.aspx'
     }
-    r = session.post('http://gs.cqupt.edu.cn:8080/gstudent/ReLogin.aspx', data=login_data, headers=header)
-    if r.json()['r'] == 1:
-        print 'Login Failed, reason is:',
-        for m in r.json()['data']:
-            print r.json()['data'][m]
-        print 'So we use cookies to login in...'
-        has_cookies = False
-        for key in cookies:
-            if key != '__name__' and cookies[key] != '':
-                has_cookies = True
-                break
-        if has_cookies is False:
-            raise ValueError('请填写config.ini文件中的cookies项.')
-        else:
-            # r = requests.get('http://www.zhihu.com/login/email', cookies=cookies) # 实现验证码登陆
-            r = session.get('http://gs.cqupt.edu.cn:8080/gstudent/default.aspx', cookies=cookies) # 实现验证码登陆
+    r = session.post('http://gs.cqupt.edu.cn:8080/gstudent/ReLogin.aspx', data=login_data, headers=header,)
+
+    # r = session.get('http://gs.cqupt.edu.cn:8080/gstudent/default.aspx', cookies=cookies) # 实现验证码登陆
 
     with open('login.html', 'w') as fp:
         fp.write(r.content)
