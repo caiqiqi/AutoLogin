@@ -3,20 +3,26 @@
 模拟学生登录研究生管理系统
 '''
 import requests
+# ConfigParser 用于从.ini文件中读取信息的
 import ConfigParser
 from IPython.display import Image
 
+config_file = 'config.ini'
+config_item_cookie = 'cookies'
+config_item_info = 'info'
+
 def create_session():
     cf = ConfigParser.ConfigParser()
-    cf.read('config.ini')
-    cookies = cf.items('cookies')
+    cf.read(config_file)
+    cookies = cf.items(config_item_cookie)
     cookies = dict(cookies)
     from pprint import pprint
     pprint(cookies)
 
 
-    username = cf.get('info', 'username')
-    password = cf.get('info', 'password')
+    username = cf.get(config_item_info, 'username')
+    password = cf.get(config_item_info, 'password')
+    # 验证码
     validateCode = ''
 
     session = requests.session()
@@ -36,7 +42,7 @@ def create_session():
     }
     r = session.post('http://gs.cqupt.edu.cn:8080/gstudent/ReLogin.aspx', data=login_data, headers=header,)
 
-    # r = session.get('http://gs.cqupt.edu.cn:8080/gstudent/default.aspx', cookies=cookies) # 实现验证码登陆
+    #r = session.get('http://gs.cqupt.edu.cn:8080/gstudent/default.aspx', cookies=cookies) # 实现验证码登陆
 
     with open('login.html', 'w') as fp:
         fp.write(r.content)
