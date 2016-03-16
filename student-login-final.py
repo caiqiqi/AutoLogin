@@ -28,6 +28,17 @@ result_captcha = ''
 url_captcha = "http://gs.cqupt.edu.cn:8080/Public/ValidateCode.aspx"
 file_captcha = "captcha.png"
 
+
+headers0 = {
+	"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:44.0) Gecko/20100101 Firefox/44.0",
+	"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+	"Accept-Language": "zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3",
+	"Accept-Encoding": "gzip, deflate",
+	"Connection": "keep-alive",
+	"Cookie": "ASP.NET_SessionId=k3cjuzqhfaojrlf23mjs2qhx; LoginType=LoginType=1; DropDownListXqu=DropDownListXqu=1; DropDownListYx_xsbh=DropDownListYx_xsbh=",
+	"Host": "gs.cqupt.edu.cn:8080",
+	"Referer": "http://gs.cqupt.edu.cn:8080/gstudent/ReLogin.aspx?ReturnUrl=/gstudent/loging.aspx?undefined"
+}
 # 全局session，重复利用
 # session = requests.session()
 
@@ -40,16 +51,16 @@ def get_item_from_ini():
 	username = cf.get(config_item_info, 'username')
 	password = cf.get(config_item_info, 'password')
     # 不要将四个空格喝TAB键混用了
-	print "从.ini文件中读取账户密码信息..."
+	print "从.ini文件中读取账户信息..."
 	print(username)
-	print(password)
+	#print(password)
 
 def save_img_from_url(imageUrl, filename):
 	'''
 	get the captcha by the url_captcha and save the image as 'captcha.png'
 	'''
-	u = urllib2.urlopen(imageUrl)
-	data = u.read()
+	request = urllib2.Request(imageUrl, headers= headers0)
+	data = urllib2.urlopen(imageUrl).read()
 	#with open(filename, 'w') as fp:
 		#shutil.copyfileobj(data, fp)
 	f = open(filename, 'wb')
@@ -157,5 +168,5 @@ headers2 = {
 	"Origin": "http://gs.cqupt.edu.cn:8080"
 }
 r2 = session.get(url_course_query, headers = headers2)
-print r2.text
+#print r2.text
 
