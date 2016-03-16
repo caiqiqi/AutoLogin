@@ -105,7 +105,7 @@ def parse_img_to_txt():
 	if is_file_empty(file_captcha)== False:
 		result = pytesseract.image_to_string(Image.open(file_captcha))
 		return result
-		print result_captcha
+		print result
 	else:
 		print "File size zero!"
 
