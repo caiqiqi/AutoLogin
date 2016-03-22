@@ -3,22 +3,22 @@
 
 from bs4 import BeautifulSoup
 # 用于显示表格的
-from prettytable import PrettyTable
+# from prettytable import PrettyTable
 
 TAG_INPUT = 'input'
 ID_VIEWSTATE = "__VIEWSTATE"
 ID_EVENTVALIDATION = "__EVENTVALIDATION"
 
+# 用于找到sessionId的
+_pattern_1 = "Set-Cookie"
+_pattern_2 = ";"
 
-def parse_post_params(html_doc):
+
+def parse_to_post_params(html_doc):
     '''
     从 html_doc中解析出两个参数
     :param html_doc: 待解析的html页面
     :return: 包含两个已解析的参数的字典
-    '''
-    '''
-    :param html_doc:
-    :return:
     '''
     # soup 就是BeautifulSoup处理格式化后的字符串
     soup = BeautifulSoup(html_doc, "lxml")
@@ -31,38 +31,43 @@ def parse_post_params(html_doc):
     dict_values = {}
     dict_values['__VIEWSTATE'] = value_VIEWSTATE
     dict_values['__EVENTVALIDATION'] = value_EVENTVALIDATION
+    print dict_values['__VIEWSTATE']
+    print dict_values['__EVENTVALIDATION']
 
     return dict_values
 
-def parse_courses_selected(html_doc):
-
+def parse_to_courses_selected(html_doc):
+    '''
+    选课结果查询
+    '''
     soup = BeautifulSoup(html_doc, "lxml")
     # 选了几门课
-    num_courses_selected = _parse_num_courses_selected(soup)
+    num_courses_selected = _parse_to_num_courses_selected(soup)
     # 选了哪些课
-    courses_selected = _parse_courses_selected(soup)
+    courses_selected = _parse_to_courses_selected(soup)
     print u'选了几门课呢?'
     print num_courses_selected
     print u'选了哪些课呢?'
-    # print courses_selected
+    print courses_selected
     # return num_courses_selected
 
 
-def _parse_num_courses_selected(obj_soup):
+def _parse_to_num_courses_selected(obj_soup):
     # 通过标签来找
     id_num_courses = "ctl00_contentParent_lblNum"
     # <span id="ctl00_contentParent_lblNum" style="font-weight:bold;">所选课程 共：7 门</span>
     return obj_soup.find(id= id_num_courses).text
 
 
-def _parse_courses_selected(obj_soup):
+def _parse_to_courses_selected(obj_soup):
     id_couses_list = "ctl00_contentParent_dgData"
     table_courses_list = obj_soup.find(id= id_couses_list)
-    # 得到table中的所有 <tr>标签
-    list_tr = table_courses_list.find_all('tr')
+    return table_courses_list.prettify()
 
-    list_tr0_th = list_tr[0].find_all('th')
-    for i in list_tr0_th:
-        print i.text
 
-    # print list_tr0_th[0].text
+def parse_to_sessionId(resp_headers):
+    ''' 找到headers这个dict中键为 _pattern_1的值,将其按照_pattern_2 分割成两份, 然后取其第一部分[0] '''
+    _sessionID = resp_headers[_pattern_1].split(_pattern_2)[0]
+    print "SessinId:"
+    print _sessionID
+    return _sessionID

@@ -5,7 +5,7 @@ __author__ = 'caiqiqi'
 import requests
 import re
 
-from parser import parse_courses_selected
+from parser import parse_to_courses_selected
 
 _url_relogin = "http://gs.cqupt.edu.cn:8080/gstudent/ReLogin.aspx"
 
@@ -45,4 +45,4 @@ if re.match(_url_relogin, _r_str) == None:
     # 表示匹配不成功,即返回的页面不是 _url_relogin,则说明已经成功得到想要的页面了,没有被强制跳转
     #print _r.text
     #TODO 解析
-    parse_courses_selected(_r.content)
+    parse_to_courses_selected(_r.content)
