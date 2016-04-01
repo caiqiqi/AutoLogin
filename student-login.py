@@ -7,6 +7,7 @@ import requests
 
 from parser import parse_to_sessionId
 from parser import parse_to_post_params
+from parser import check_if_captcha_wrong
 import util
 
 #caiqiqi
@@ -33,8 +34,9 @@ _file_captcha = "captcha.png"
 # 登录成功之后跳转到的页面
 _url_loging = "http://gs.cqupt.edu.cn:8080/gstudent/loging.aspx?undefined"
 # 要登录必须通过这个页面,POST请求也是向这个页面发出
-_url_relogin_get = "http://gs.cqupt.edu.cn:8080/gstudent/ReLogin.aspx?ReturnUrl=/gstudent/loging.aspx?undefined"
-_url_relogin_post = "http://gs.cqupt.edu.cn:8080/gstudent/ReLogin.aspx?ReturnUrl=%2fgstudent%2floging.aspx%3fundefined"
+_url_relogin = "http://gs.cqupt.edu.cn:8080/gstudent/ReLogin.aspx?ReturnUrl=/gstudent/loging.aspx?undefined"
+# 传递的参数
+_params_ = {'ReturnUrl': '/gstudent/loging.aspx?undefined'}
 # 用于验证你是否已经登录成功(查你选了哪些课)
 _url_course_query = "http://gs.cqupt.edu.cn:8080/gstudent/Course/CourseSelQuery.aspx?EID=Ng!0IdeEcMBa4v7gTkZteOPL5Mjmu7TIBdO8k2iXxW479MCMokufJQ=="
 
@@ -86,7 +88,7 @@ _url_payload = {
 
 
 # 为了得到SessionId,先得对这个地址进行一次请求
-resp1 = requests.get(_url_relogin_get)
+resp1 = requests.get(_url_relogin)
 print resp1.headers
 # 得到响应头： .headers
 dict_resp1_headers = resp1.headers
@@ -112,11 +114,15 @@ _url_payload['ctl00$contentParent$UserName'] =     dict_user['username']
 _url_payload['ctl00$contentParent$PassWord'] =     dict_user['password']
 _url_payload['ctl00$contentParent$ValidateCode'] = _str_captcha
 
-resp2 = requests.post(_url_relogin_post, data = json.dumps(_url_payload), headers = _headers_post)
+
+resp2 = requests.post(_url_relogin, data = json.dumps(_url_payload), headers = _headers_post)
 print "当前所处的url:"
 print resp2.url
-dict_resp2_headers = resp2.headers
-print dict_resp2_headers['Content-Length']
+# dict_resp2_headers = resp2.headers
+
+print resp2.content
+check_if_captcha_wrong(resp2.content)
+
 
 #resp3 = requests.get(_url_loging)
 #print "当前所处的url:"

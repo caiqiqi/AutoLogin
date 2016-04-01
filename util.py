@@ -16,7 +16,7 @@ CONFIG_FILE = 'config.ini'
 CONFIG_ITEM_INFO = 'info'
 
 def gen_random_int():
-    int_random = random.randint(100000000, 999999999)
+    int_random = random.randint(1000000000, 2000000000)
     print "生成的随机数为:"
     print int_random
     return int_random

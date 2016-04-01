@@ -2,6 +2,7 @@
 # -*- coding:utf-8 -*-
 
 from bs4 import BeautifulSoup
+import re
 # 用于显示表格的
 # from prettytable import PrettyTable
 
@@ -71,3 +72,12 @@ def parse_to_sessionId(resp_headers):
     print "SessinId:"
     print _sessionID
     return _sessionID
+
+def check_if_captcha_wrong(html_doc):
+    pattern_captcha_wrong = "$.dialog.alert"
+    if re.search(pattern_captcha_wrong, html_doc):
+        print pattern_captcha_wrong
+        return True
+    else:
+        print "未提示验证码有错!"
+        return False
