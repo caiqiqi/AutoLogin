@@ -2,7 +2,40 @@
 __author__ = 'caiqiqi'
 
 import sys
+# 用于解析命令行参数
+import argparse
+
 import requests
+
+
+_OPTIONS_HELP_ = {
+    'NAME': 'Your full name (e.g. 蔡奇奇)',
+    'SEX': 'Male or female',
+    'COLLEGE': 'Which college you are in',
+    'NUM': 'Your student ID number',
+    'PHONE': 'Your phone number',
+    'MAIL': 'Your email address'
+}
+
+def parse_command():
+    """ 命令行参数解析和设置 """
+    parse = argparse.ArgumentParser(description='Please input your register info.')
+
+    info = parse.add_argument_group('info')
+    info.add_argument('--name', type=str,
+                         required=True, help=_OPTIONS_HELP_['NAME'])
+    info.add_argument('--sex', type=str,
+                         required=True, help=_OPTIONS_HELP_['SEX'])
+    info.add_argument('--college', type=str,
+                         required=True, help=_OPTIONS_HELP_['COLLEGE'])
+    info.add_argument('--num', type=str,
+                         required=True, help=_OPTIONS_HELP_['NUM'])
+    info.add_argument('--phone', type=str,
+                         required=True, help=_OPTIONS_HELP_['PHONE'])
+    info.add_argument('--mail', type=str,
+                         required=True, help=_OPTIONS_HELP_['MAIL'])
+
+    return parse.parse_args()
 
 
 register_url =        "http://m.hy323220.icoc.in/col.jsp?id=106"
@@ -19,6 +52,7 @@ get_headers = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.110 Safari/537.36"
 }
 
+# 先GET，为了得到cookie用于之后的POST
 resp_get = requests.get(register_url, headers=get_headers)
 # 先得到CookieJar
 cookiejar = resp_get.cookies
@@ -38,13 +72,14 @@ post_headers = {
     "X-Requested-With": "XMLHttpRequest"
 }
 
+
 #接收命令行参数
-_name    = sys.argv[0]
-_sex     = sys.argv[1]
-_colloge = sys.argv[2]
-_stuNum  = sys.argv[3]
-_phoneNum= sys.argv[4]
-_mail    = sys.argv[5]
+_name    = parse_command().NAME
+_sex     = parse_command().SEX
+_colloge = parse_command.COLLEGE
+_stuNum  = parse_command().NUM
+_phoneNum= parse_command().PHONE
+_mail    = parse_command().MAIL
 
 
 post_payload = {
@@ -56,11 +91,14 @@ post_payload = {
     "tmpFileList": "[]",
     "_TOKEN": "undefined"
 }
+
+# 带着请求头headers和表单发起POST请求
 resp_post= requests.post(register_post_url, data=post_payload, headers=post_headers)
 
-print "#1: title"
-print resp_post.url
-print "#2: cookie"
-print resp_post.cookies
-print "#3: content"
-print resp_post.text
+if resp_post != None:
+	print "#1: title"
+	print resp_post.url
+	print "#2: cookie"
+	print resp_post.cookies
+	print "#3: content"
+	print resp_post.text
