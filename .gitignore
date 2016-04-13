@@ -4,3 +4,6 @@ config.ini
 *.pyc
 # .png
 *.png
+# private info
+fengcaidasai.txt
+x.js
