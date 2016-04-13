@@ -1,6 +1,7 @@
 #coding=utf-8
 __author__ = 'caiqiqi'
 
+import sys
 import requests
 
 
@@ -37,10 +38,19 @@ post_headers = {
     "X-Requested-With": "XMLHttpRequest"
 }
 
+#接收命令行参数
+_name    = sys.argv[0]
+_sex     = sys.argv[1]
+_colloge = sys.argv[2]
+_stuNum  = sys.argv[3]
+_phoneNum= sys.argv[4]
+_mail    = sys.argv[5]
+
+
 post_payload = {
-	"cmd": "addSubmit",
+    "cmd": "addSubmit",
     "formId": "2",
-    "submitContentList": '[{"id":0,"val":"嗯哼"},{"id":1,"val":"男"},{"id":2,"val":"嗯哼"},{"id":3,"val":"xh"},{"id":4,"val":"01234567890"},{"id":5,"val":"123456789@qq.com"}]',
+    "submitContentList": [{"id":0,"val":_name},{"id":1,"val":_sex},{"id":2,"val":_colloge},{"id":3,"val":_stuNum},{"id":4,"val":_phoneNum},{"id":5,"val":_mail}],
     "vCodeId": "3162",
     "validateCode": "undefined",
     "tmpFileList": "[]",
