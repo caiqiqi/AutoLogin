@@ -8,7 +8,7 @@ register_url =        "http://m.hy323220.icoc.in/col.jsp?id=106"
 register_post_url =   "http://m.hy323220.icoc.in/ajax/mobiForm_h.jsp"
 
 get_headers = {
-	"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
     "Accept-Encoding": "gzip, deflate, sdch",
     "Accept-Language":"zh-CN,zh;q=0.8,zh-TW;q=0.6,en;q=0.4",
     "Cache-Control":"max-age=0",
@@ -24,7 +24,7 @@ cookiejar = resp_get.cookies
 cookies_get_dict = {'__cfduid': cookiejar['__cfduid'], '_cliid': cookiejar['_cliid']}
 
 post_headers = {
-	"Accept": "*/*",
+    "Accept": "*/*",
     "Accept-Encoding": "gzip, deflate",
     "Accept-Language": "zh-CN,zh;q=0.8,zh-TW;q=0.6,en;q=0.4",
     "Connection": "keep-alive",
