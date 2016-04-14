@@ -8,32 +8,17 @@ import argparse
 import requests
 
 
-_OPTIONS_HELP_ = {
-    'NAME': 'Your full name (e.g. 蔡奇奇)',
-    'SEX': 'Male or female',
-    'COLLEGE': 'Which college you are in',
-    'NUM': 'Your student ID number',
-    'PHONE': 'Your phone number',
-    'MAIL': 'Your email address'
-}
-
 def parse_command():
     """ 命令行参数解析和设置 """
     parse = argparse.ArgumentParser(description='Please input your register info.')
 
     info = parse.add_argument_group('info')
-    info.add_argument('--name', type=str,
-                         required=True, help=_OPTIONS_HELP_['NAME'])
-    info.add_argument('--sex', type=str,
-                         required=True, help=_OPTIONS_HELP_['SEX'])
-    info.add_argument('--college', type=str,
-                         required=True, help=_OPTIONS_HELP_['COLLEGE'])
-    info.add_argument('--num', type=str,
-                         required=True, help=_OPTIONS_HELP_['NUM'])
-    info.add_argument('--phone', type=str,
-                         required=True, help=_OPTIONS_HELP_['PHONE'])
-    info.add_argument('--mail', type=str,
-                         required=True, help=_OPTIONS_HELP_['MAIL'])
+    info.add_argument('--name', type=str, required=True, dest='NAME')
+    info.add_argument('--sex', type=str, required=True, dest='SEX')
+    info.add_argument('--college', type=str, required=True, dest='COLLEGE')
+    info.add_argument('--num', type=str, required=True, dest='NUM')
+    info.add_argument('--phone', type=str, required=True, dest='PHONE')
+    info.add_argument('--mail', type=str, required=True, dest='MAIL')
 
     return parse.parse_args()
 
@@ -74,12 +59,13 @@ post_headers = {
 
 
 #接收命令行参数
-_name    = parse_command().NAME
-_sex     = parse_command().SEX
-_colloge = parse_command.COLLEGE
-_stuNum  = parse_command().NUM
-_phoneNum= parse_command().PHONE
-_mail    = parse_command().MAIL
+submitContentList = parse_command()
+_name    = submitContentList.NAME
+_sex     = submitContentList.SEX
+_colloge = submitContentList.COLLEGE
+_stuNum  = submitContentList.NUM
+_phoneNum= submitContentList.PHONE
+_mail    = submitContentList.MAIL
 
 
 post_payload = {
@@ -101,4 +87,4 @@ if resp_post != None:
 	print "#2: cookie"
 	print resp_post.cookies
 	print "#3: content"
-	print resp_post.text
+	print resp_post.content
