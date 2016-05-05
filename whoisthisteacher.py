@@ -6,6 +6,8 @@ import sys
 import requests
 import lxml.html
 
+
+########## url ##########
 main_url            = "http://www.cqupt.edu.cn/cqupt/index.shtml"
 
 #通信与信息工程学院
@@ -28,6 +30,7 @@ jingguan_url_1      = "http://jgxy.cqupt.edu.cn/list.php?sid=46&bid=12&page=1"
 jingguan_url_2      = "http://jgxy.cqupt.edu.cn/list.php?sid=46&bid=12&page=2"
 jingguan_url_3      = "http://jgxy.cqupt.edu.cn/list.php?sid=46&bid=12&page=3"
 jingguan_url_4      = "http://jgxy.cqupt.edu.cn/list.php?sid=46&bid=12&page=4"
+jingguan_url = [jingguan_url_1, jingguan_url_2, jingguan_url_3, jingguan_url_4]
 #传媒艺术学院
 chuanmei_url_0      = "http://cmys.cqupt.edu.cn/teachers/yingshibiandaoyuchuanboxi/"
 chuanmei_url_1      = "http://cmys.cqupt.edu.cn/teachers/shuzimeitiyudonghuaxi/"
@@ -44,51 +47,53 @@ makesi_url_1        = "http://marx.cqupt.edu.cn/home?method=childPhotoShow&categ
 makesi_url_2        = "http://marx.cqupt.edu.cn/home?method=childPhotoShow&category=%E6%95%99%E6%8E%88"
 
 
+
+########## xpath ##########
 main_xpath  = '//div[@class="_s1 select"]/ul/li/a'
 ruanjian_xpath = '//body/form[@id="aspnetForm"]/div[@id="main"]/div[@class="content"]/div[@class="list_right mt20"]/div[@class="news_list mt15"]/div/div/div[@id="ctl00_ContentPlaceHolder1_UpdatePanel1"]/ul/li/span[@class="text"]/a'
 waiguoyu_xpath = '//li/a[@target="_blank"]'
 lixueyuan_xpath = '//font[@style="font-size:12px;line-height:30px;"]/a[@target="_blank"]'
-jingguan_xpath = '//div[@id="container"]/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td/table[2]/tbody/tr[2]/td/table/tbody/tr/td/a'
-
-
+#jingguan_xpath = '//div[@id="container"]/table/tbody/tr[2]/td[2]/table/tbody/tr[3]/td/table[2]/tbody/tr[2]/td/table/tbody/tr/td/a'
+jingguan_xpath = '//td[@align="left" and @class="bottom1"]/a'
+zidonghua_xpath = '//span[@class="STYLE13"]/a'
+#jisuanji_xpath_0 = '/html/body/div/table[4]/tbody/tr/td[2]/div[3]/table/tbody/tr[2]/td/div'
+jisuanji_xpath_0 = '//td[@valign="top"]/div[@class="articleContent"]/table/tr[2]/td/p'
+jisuanji_xpath_1 = '//td[@width="100%" and @height="70" and @style="padding:10pt"]/p/a'
+#Note:用xpath时，在html元素中碰到tbody不用查找tbody，直接忽略，往下一级查找，如不要`table/tbody/tr`
+#而直接 `table/tr` 即可
 
 def get_teacher_name(college_url, xpath_expression, tp):
     resp = requests.get(college_url)
     doc = lxml.html.document_fromstring(resp.content)
+    print "-----" + tp + "-----"
 
-    #软件学院 DONE
-    if tp == 'ruanjian':
-        html_uls = doc.xpath(xpath_expression)     # list类型
-        print "得到的list长度为：", str(len(html_uls))
-        for html_ul in html_uls:
-            print html_ul.text
-    #外国语学院
-    elif tp == 'waiguoyu':
-        html_uls = doc.xpath(xpath_expression)
-        print len(html_uls)
-        html_uls = doc.xpath(xpath_expression)
-    	for html_ul in html_uls:
-    		print html_ul.text
-    #理学院 DONE
-    elif tp == 'lixueyuan':
-    	html_uls = doc.xpath(xpath_expression)
-    	for html_ul in html_uls:
-    		print html_ul.text
-    #主页 DONE
-    elif tp == 'main':
-    	html_uls = doc.xpath(xpath_expression)
-    	for html_ul in html_uls:
-    		print html_ul.text
+    html_uls = doc.xpath(xpath_expression)     # list类型
+    print "得到的list长度为：", str(len(html_uls))
+    for html_ul in html_uls:
+        print html_ul
+        #获得某html元素的某属性
+        #print html_ul.attrib['href']
+
+
 
 #主页
 #get_teacher_name(main_url, main_xpath, 'main')
+'''
 #软件学院 //TODO: 对js进行跳转到下一页的情况进行处理
-get_teacher_name(ruanjian_url_0, ruanjian_xpath, 'ruanjian')
+get_teacher_name(ruanjian_url_0, ruanjian_xpath, '软件学院')
 #外国语学院
-#get_teacher_name(waiguoyu_url_0, waiguoyu_xpath, 'waiguoyu')
+get_teacher_name(waiguoyu_url_0, waiguoyu_xpath, '外国语学院')
 #理学院
-#get_teacher_name(lixueyuan_url_0, lixueyuan_xpath , 'lixueyuan')
+get_teacher_name(lixueyuan_url_0, lixueyuan_xpath , '理学院')
 #经管学院
-#get_teacher_name(jingguan_url_1, jingguan_xpath)
-#理学院
-#get_teacher_name(lixueyuan_url_0, , 'lixueyuan')
+for i in range(0,4):
+	get_teacher_name(jingguan_url[i], jingguan_xpath, '经管学院')
+
+#自动化学院 //TODO: ##bug 魏F--> 魏旻
+get_teacher_name(zidonghua_url_0, zidonghua_xpath, '自动化学院')
+'''
+#计算机学院
+get_teacher_name(jisuanji_url_0, jisuanji_xpath_0, '计算机学院')
+#get_teacher_name(jisuanji_url_1, jisuanji_xpath_1, '计算机学院')
+
+
