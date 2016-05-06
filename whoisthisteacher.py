@@ -83,8 +83,8 @@ def get_teacher_name(college_url, xpath_expression, tp, is_list=False):
 
 
 #主页
-#get_teacher_name(main_url, main_xpath, 'main')
-'''
+get_teacher_name(main_url, main_xpath, 'main')
+
 #软件学院 //TODO: 对js进行跳转到下一页的情况进行处理
 get_teacher_name(ruanjian_url_0, ruanjian_xpath, '软件学院')
 #外国语学院
@@ -97,10 +97,10 @@ for i in range(0,4):
 
 #自动化学院 //TODO: ##bug 魏F--> 魏旻
 get_teacher_name(zidonghua_url_0, zidonghua_xpath, '自动化学院')
-'''
+
 #计算机学院
-#get_teacher_name(jisuanji_url_0, jisuanji_xpath_0, '计算机学院')
-#get_teacher_name(jisuanji_url_1, jisuanji_xpath_1, '计算机学院')
+get_teacher_name(jisuanji_url_0, jisuanji_xpath_0, '计算机学院')
+get_teacher_name(jisuanji_url_1, jisuanji_xpath_1, '计算机学院')
 #通信学院
 get_teacher_name(tongxin_url_0, tongxin_xpath, '通信学院')
 
