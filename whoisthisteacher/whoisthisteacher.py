@@ -29,8 +29,7 @@ lixueyuan_url     = "http://slxy.cqupt.edu.cn/teacherList.php"
 #经济管理学院
 jingguan_url = [ "http://jgxy.cqupt.edu.cn/list.php?sid=46&bid=12&page="+str(i) for i in range(1,5)]
 #传媒艺术学院
-chuanmei_url = 
-["http://cmys.cqupt.edu.cn/teachers/yingshibiandaoyuchuanboxi/", 
+chuanmei_url = ["http://cmys.cqupt.edu.cn/teachers/yingshibiandaoyuchuanboxi/", 
 "http://cmys.cqupt.edu.cn/teachers/shuzimeitiyudonghuaxi/", 
 "http://cmys.cqupt.edu.cn/teachers/yishushejixi/", 
 "http://cmys.cqupt.edu.cn/teachers/shiyanzhongxin/", 
@@ -40,8 +39,7 @@ waiguoyu_url      = "http://cfl.cqupt.edu.cn/szdw.htm"
 #法学院
 faxueyuan_url     = "http://law.cqupt.edu.cn/index.php/t_team/tlist"
 #马克思主义学院
-makesi_url = 
-["http://marx.cqupt.edu.cn/home?method=childPhotoShow&category=%E8%AE%B2%E5%B8%88", 
+makesi_url = ["http://marx.cqupt.edu.cn/home?method=childPhotoShow&category=%E8%AE%B2%E5%B8%88", 
 "http://marx.cqupt.edu.cn/home?method=childPhotoShow&category=%E5%89%AF%E6%95%99%E6%8E%88", 
 "http://marx.cqupt.edu.cn/home?method=childPhotoShow&category=%E6%95%99%E6%8E%88"]
 
@@ -63,7 +61,7 @@ tongxin_xpath = '//div[@class="teacher-name"]/parent::*'
 
 
 
-def get_teacher_name(college_url, xpath_expression, tp, is_list=False):
+def get_teacher_name(college_url, xpath_expression, tp):
     resp = requests.get(college_url)
     doc = lxml.html.document_fromstring(resp.content)
     print "-----" + tp + "-----"
@@ -81,26 +79,31 @@ def get_teacher_name(college_url, xpath_expression, tp, is_list=False):
         print html_ul.attrib['href']
 
 
+def main():
+    #主页
+    get_teacher_name(main_url, main_xpath, 'main')
 
-#主页
-get_teacher_name(main_url, main_xpath, 'main')
+    #软件学院 //TODO: 对js进行跳转到下一页的情况进行处理
+    get_teacher_name(ruanjian_url, ruanjian_xpath, '软件学院')
+    #外国语学院
+    get_teacher_name(waiguoyu_url, waiguoyu_xpath, '外国语学院')
+    #理学院
+    get_teacher_name(lixueyuan_url, lixueyuan_xpath , '理学院')
+    #经管学院
+    for i in range(0,4):
+	    get_teacher_name(jingguan_url[i], jingguan_xpath, '经管学院')
 
-#软件学院 //TODO: 对js进行跳转到下一页的情况进行处理
-get_teacher_name(ruanjian_url_0, ruanjian_xpath, '软件学院')
-#外国语学院
-get_teacher_name(waiguoyu_url_0, waiguoyu_xpath, '外国语学院')
-#理学院
-get_teacher_name(lixueyuan_url_0, lixueyuan_xpath , '理学院')
-#经管学院
-for i in range(0,4):
-	get_teacher_name(jingguan_url[i], jingguan_xpath, '经管学院')
+    #自动化学院 //TODO: ##bug 魏F--> 魏旻
+    get_teacher_name(zidonghua_url, zidonghua_xpath, '自动化学院')
 
-#自动化学院 //TODO: ##bug 魏F--> 魏旻
-get_teacher_name(zidonghua_url_0, zidonghua_xpath, '自动化学院')
+    #计算机学院
+    get_teacher_name(jisuanji_url_0, jisuanji_xpath_0, '计算机学院')
+    get_teacher_name(jisuanji_url_1, jisuanji_xpath_1, '计算机学院')
+    #通信学院
+    for i in range(1,13):
+    get_teacher_name(tongxin_url[i], tongxin_xpath, '通信学院')
 
-#计算机学院
-get_teacher_name(jisuanji_url_0, jisuanji_xpath_0, '计算机学院')
-get_teacher_name(jisuanji_url_1, jisuanji_xpath_1, '计算机学院')
-#通信学院
-get_teacher_name(tongxin_url_0, tongxin_xpath, '通信学院')
+if __name__ == '__main__':
+	main()
+
 
