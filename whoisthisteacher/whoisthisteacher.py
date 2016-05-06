@@ -72,6 +72,7 @@ def get_teacher_name(college_url, xpath_expression, tp):
     	print html_ul.find('div').text
         #获得某html元素的某属性
         print html_ul.attrib['href']
+        return
     
     for html_ul in html_uls:
         print html_ul.text
@@ -91,7 +92,7 @@ def main():
     get_teacher_name(lixueyuan_url, lixueyuan_xpath , '理学院')
     #经管学院
     for i in range(0,4):
-	    get_teacher_name(jingguan_url[i], jingguan_xpath, '经管学院')
+        get_teacher_name(jingguan_url[i], jingguan_xpath, '经管学院')
 
     #自动化学院 //TODO: ##bug 魏F--> 魏旻
     get_teacher_name(zidonghua_url, zidonghua_xpath, '自动化学院')
@@ -101,9 +102,9 @@ def main():
     get_teacher_name(jisuanji_url_1, jisuanji_xpath_1, '计算机学院')
     #通信学院
     for i in range(1,13):
-    get_teacher_name(tongxin_url[i], tongxin_xpath, '通信学院')
+        get_teacher_name(tongxin_url[i], tongxin_xpath, '通信学院')
 
 if __name__ == '__main__':
-	main()
+    main()
 
 
