@@ -92,7 +92,7 @@ headers = {
 
 form_data = {
 	"accountId": "1620600@cqupt",
-	"accountPwd": "160035",
+	"accountPwd": "000000",
 	"imgcode": _result_captcha
 }
 
