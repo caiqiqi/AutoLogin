@@ -13,10 +13,6 @@ from PIL import Image
 
 from bs4 import BeautifulSoup
 
-# 再用GET去到validateCode.aspx
-# 解析验证码之后，将结果告诉url_payload
-# 带着这个header，用POST提交到Relogin.aspx(这时解析ini文件中的信息)
-# 测试是否登录成功
 
 # 开始就用一个session来维持整个回话，这样在之后请求中可以沿用之前的headers，
 # 而且可以往headers里添加已有的字段以覆盖之前的字段，这样connection才是『keep-alive』，而不是close
@@ -57,7 +53,7 @@ headers_image = {
     "Accept-Language": "zh-CN,zh;q=0.8,zh-TW;q=0.6,en;q=0.4"
 } 
 # 要POST给登录页面的
-headers = {
+headers_post = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.84 Safari/537.36",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
     "Accept-Language": "zh-CN,zh;q=0.8,zh-TW;q=0.6,en;q=0.4",
@@ -136,7 +132,6 @@ def parse_to_post_params(html_str):
     验证码带随机数字的url
     '''
 
-    TAG_INPUT = 'input'
     ID_VIEWSTATE = "__VIEWSTATE"
     ID_EVENTVALIDATION = "__EVENTVALIDATION"
     ID_VALIDATECODE = "ctl00_contentParent_ValidateImage"
@@ -182,16 +177,15 @@ _result_captcha = _parse_img_to_txt(_file_captcha)
 print "验证码："
 print _result_captcha
 
-### 注意：即便你已经登录了，你再开一个浏览器标签页，然后发出一个这样的请求之后，那你之前已经登录的那个标签页再刷新的时候也失去了登录状态，返回一个重新登录的页面让你重新登录。
 
 
 # 将解析到的结果告诉url_payload
 _url_payload = '__EVENTTARGET=ctl00$contentParent$btLogin&__EVENTARGUMENT=&__VIEWSTATE='+ VIEWSTATE+ '&' +'__EVENTVALIDATION='+ EVENTVALIDATION + '&' +'ctl00$contentParent$UserName='+ _username + '&' +'ctl00$contentParent$PassWord='+ _password + '&' +'ctl00$contentParent$ValidateCode='+ _result_captcha
 
-_r = s.post(_url_relogin, data= _url_payload, headers=headers)
-print _r.url
+_r1 = s.post(_url_relogin, data= _url_payload, headers=headers_post)
+print _r1.url
 
 
 _r2 = s.get(_url_course_query, headers=headers_query)
 print _r2.url
-# TODO: 后续任意已登录的操作
+# TODO: 进行后续任意已登录的操作
