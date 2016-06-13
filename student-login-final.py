@@ -11,7 +11,7 @@ import ConfigParser
 import pytesseract
 from PIL import Image
 
-from parser import parse_to_post_params
+from bs4 import BeautifulSoup
 
 # 再用GET去到validateCode.aspx
 # 解析验证码之后，将结果告诉url_payload
@@ -30,22 +30,21 @@ _password = ''
 _result_captcha = ''
 
 _file_captcha     = "captcha.png"
+
 _url_captcha      = "http://gs.cqupt.edu.cn:8080/Public/ValidateCode.aspx"
 _url_loging       = "http://gs.cqupt.edu.cn:8080/gstudent/loging.aspx?undefined"
 _url_relogin      = "http://gs.cqupt.edu.cn:8080/gstudent/ReLogin.aspx?ReturnUrl=/gstudent/loging.aspx?undefined"
 _url_course_query = "http://gs.cqupt.edu.cn:8080/gstudent/Course/CourseSelQuery.aspx?EID=Ng!0IdeEcMBa4v7gTkZteOPL5Mjmu7TIBdO8k2iXxW479MCMokufJQ=="
 
-_cookie = "Cookie"
-_cookie_value_318_2055 = "ASP.NET_SessionId=nembjmva4ig4uw43l0rna5ae"
 
 headers0 = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:44.0) Gecko/20100101 Firefox/44.0",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language": "zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3",
-    "Accept-Encoding": "gzip, deflate",
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.84 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Accept-Language": "zh-CN,zh;q=0.8,zh-TW;q=0.6,en;q=0.4",
+    "Accept-Encoding": "gzip, deflate, sdch",
     "Connection": "keep-alive",
     "Host": "gs.cqupt.edu.cn:8080",
-    "Upgrade-Insecure-Requests": "1"
+    "Upgrade-Insecure-Requests": "1",
 }
 
 headers_image = {
@@ -59,9 +58,9 @@ headers_image = {
 } 
 # 要POST给登录页面的
 headers = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:44.0) Gecko/20100101 Firefox/44.0",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language": "zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3",
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.84 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Accept-Language": "zh-CN,zh;q=0.8,zh-TW;q=0.6,en;q=0.4",
     "Accept-Encoding": "gzip, deflate",
     "Cache-Control": "max-age=0",
     "Connection": "keep-alive",
@@ -71,21 +70,10 @@ headers = {
     "Content-Type": "application/x-www-form-urlencoded",
     "Referer": "http://gs.cqupt.edu.cn:8080/gstudent/ReLogin.aspx?ReturnUrl=/gstudent/loging.aspx?undefined"
 }
-# 登录成功页面的
-headers1 = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:44.0) Gecko/20100101 Firefox/44.0",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language": "zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3",
-    "Accept-Encoding": "gzip, deflate",
-    "Cache-Control": "max-age=0",
-    "Connection": "keep-alive",
-    "Host": "gs.cqupt.edu.cn:8080",
-    "Upgrade-Insecure-Requests": "1",
-    "Referer": "http://gs.cqupt.edu.cn:8080/gstudent/ReLogin.aspx?ReturnUrl=/gstudent/loging.aspx?undefined"
-}
+
 # 查询课程详情的
-headers2 = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:44.0) Gecko/20100101 Firefox/44.0",
+headers_query = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.84 Safari/537.36",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "zh-CN,zh;q=0.8,en-US;q=0.5,en;q=0.3",
     "Accept-Encoding": "gzip, deflate",
@@ -140,7 +128,31 @@ def _parse_img_to_txt(image_file):
         return ""
 
 
+def parse_to_post_params(html_str):
+    '''
+    从 html_str中解析出三个参数
+    __VIEWSTATE,
+    __EVENTVALIDATION,
+    验证码带随机数字的url
+    '''
 
+    TAG_INPUT = 'input'
+    ID_VIEWSTATE = "__VIEWSTATE"
+    ID_EVENTVALIDATION = "__EVENTVALIDATION"
+    ID_VALIDATECODE = "ctl00_contentParent_ValidateImage"
+
+    # soup 就是BeautifulSoup处理格式化后的字符串
+    soup = BeautifulSoup(html_str, "lxml")
+    # 找到所有`input`标签,find_all 函数返回的是一个序列
+    # soup.find_all(TAG_INPUT)
+    # 得到VIEWSTATE的值
+    value_VIEWSTATE         = soup.find(id= ID_VIEWSTATE)['value']
+    # 得到EVENTVALIDATION的值
+    value_EVENTVALIDATION   = soup.find(id = ID_EVENTVALIDATION)['value']
+    # 得到验证码带随机数字的url
+    value_validatecode_url  = soup.find(id = ID_VALIDATECODE)['src']
+
+    return value_VIEWSTATE, value_EVENTVALIDATION, value_validatecode_url
 
 
 
@@ -172,43 +184,14 @@ print _result_captcha
 
 ### 注意：即便你已经登录了，你再开一个浏览器标签页，然后发出一个这样的请求之后，那你之前已经登录的那个标签页再刷新的时候也失去了登录状态，返回一个重新登录的页面让你重新登录。
 
-# if session != None:
-# r = session.post(url_relogin, headers= headers)
-# print r.cookies
-# print r.text
 
 # 将解析到的结果告诉url_payload
-_url_payload = {
-    '__EVENTTARGET': 'ctl00$contentParent$btLogin',
-    '__EVENTARGUMENT': '',
-    '__VIEWSTATE': VIEWSTATE,
-    '__EVENTVALIDATION': EVENTVALIDATION,
-    'ctl00$contentParent$UserName': _username,
-    'ctl00$contentParent$PassWord': _password,
-    'ctl00$contentParent$ValidateCode': _result_captcha
-}
+_url_payload = '__EVENTTARGET=ctl00$contentParent$btLogin&__EVENTARGUMENT=&__VIEWSTATE='+ VIEWSTATE+ '&' +'__EVENTVALIDATION='+ EVENTVALIDATION + '&' +'ctl00$contentParent$UserName='+ _username + '&' +'ctl00$contentParent$PassWord='+ _password + '&' +'ctl00$contentParent$ValidateCode='+ _result_captcha
 
-'''
-__EVENTTARGET=ctl00%24contentParent%24btLogin&
-__EVENTARGUMENT=&
-__VIEWSTATE=%2FwEPDwUKMTA4ODc5NDc0OA9kFgJmD2QWAgIDD2QWAgIDD2QWAgILD2QWAmYPZBYCAgEPDxYCHghJbWFnZVVybAUrfi9QdWJsaWMvVmFsaWRhdGVDb2RlLmFzcHg%2FaW1hZ2U9MTkzMTkxNDc0OGRkGAEFHl9fQ29udHJvbHNSZXF1aXJlUG9zdEJhY2tLZXlfXxYBBSFjdGwwMCRjb250ZW50UGFyZW50JFZhbGlkYXRlSW1hZ2U%3D&
-__EVENTVALIDATION=%2FwEdAAZ%2BE1NX%2B%2Fbbjbsz%2BB%2BD%2BrDncybtMhw0mn0LtKqAHeD%2F6LR%2FVkzxozH4tyiImdrtlAcUWWYub4JHktVQEGONTxqoRZzhTcnfFsWcwOVyhy6aT8GiwGHwM4Wl4obxma9ASls%3D&
-ctl00%24contentParent%24UserName=s150231003&
-ctl00%24contentParent%24PassWord=HBJMcqq2215746&
-ctl00%24contentParent%24ValidateCode=0607
-'''
-# _r = _session.post(_url_relogin, data=_url_payload, headers=headers)
-_r = s.post(_url_loging, data= _url_payload, headers=headers)
+_r = s.post(_url_relogin, data= _url_payload, headers=headers)
 print _r.url
 
 
-# 进入登录成功页面
-#_r1 = _session.get(_url_loging, headers= headers1)
-#print _r1.url
-
-# 如何判断是非已经登陆成功
-
-
-_r2 = s.get(_url_course_query, headers=headers2)
+_r2 = s.get(_url_course_query, headers=headers_query)
 print _r2.url
-#print _r2.content
+# TODO: 后续任意已登录的操作
