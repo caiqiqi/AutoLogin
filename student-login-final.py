@@ -96,7 +96,7 @@ def _get_item_from_ini():
 
 
 def save_img_to_file_and_get_result(imageUrl, filename):
-    r = requests.get(imageUrl)
+    r = s.get(imageUrl, headers=headers_image)
     f = open(filename, 'wb')
     f.write(r.content)
     f.close()
@@ -106,7 +106,6 @@ def save_img_to_file_and_get_result(imageUrl, filename):
     if 0 != file_size:
         # 将读到的图片转换成文本
         result = pytesseract.image_to_string(Image.open(filename))
-        print result
         return result
     else:
         print "解析验证码错误！"
