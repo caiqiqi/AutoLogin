@@ -137,6 +137,8 @@ def parse_to_post_params(html_str):
 
 
 def main():
+    global _url_captcha
+    global _result_captcha
     # 从ini文件中解析出账号密码信息
     _get_item_from_ini()
     print(_username)
@@ -144,9 +146,9 @@ def main():
 
     # 先GET到`登录页面`
     _r0 = s.get(_url_loging, headers = headers0)
-    VIEWSTATE, EVENTVALIDATION, _url_captcha_tmp = parse_to_post_params(_r0.content)
+    VIEWSTATE, EVENTVALIDATION, url_captcha_tmp = parse_to_post_params(_r0.content)
     # 分割出从页面中得到的参数并将其连接到验证码的url上去
-    _url_captcha = _url_captcha + "?" + _url_captcha_tmp.split('?')[1]
+    _url_captcha = _url_captcha + "?" + url_captcha_tmp.split('?')[1]
     print VIEWSTATE
     print EVENTVALIDATION
     print "待访问的带随机数字的验证码的url："
@@ -161,19 +163,19 @@ def main():
 
 
     # 将解析到的结果告诉url_payload
-    _url_payload = '__EVENTTARGET=ctl00$contentParent$btLogin&__EVENTARGUMENT=&__VIEWSTATE='+ VIEWSTATE+ '&' +'__EVENTVALIDATION='+ EVENTVALIDATION + '&' +'ctl00$contentParent$UserName='+ _username + '&' +'ctl00$contentParent$PassWord='+ _password + '&' +'ctl00$contentParent$ValidateCode='+ _result_captcha
+    payload = '__EVENTTARGET=ctl00$contentParent$btLogin&__EVENTARGUMENT=&__VIEWSTATE='+ VIEWSTATE+ '&' +'__EVENTVALIDATION='+ EVENTVALIDATION + '&' +'ctl00$contentParent$UserName='+ _username + '&' +'ctl00$contentParent$PassWord='+ _password + '&' +'ctl00$contentParent$ValidateCode='+ _result_captcha
 
     # 登录
-    _r1 = s.post(_url_relogin, data= _url_payload, headers=headers_post)
-    print _r1.url
+    r1 = s.post(_url_relogin, data= payload, headers=headers_post)
+    print r1.url
 
     # 课程查询
-    _r2 = s.get(_url_course_query, headers=headers_query)
-    print _r2.url
+    r2 = s.get(_url_course_query, headers=headers_query)
+    print r2.url
     # 考试查询
-    _r3 = s.get(_url_exam_info, headers=headers_query)
-    print _r3.url
-    print _r3.content
+    r3 = s.get(_url_exam_info, headers=headers_query)
+    print r3.url
+    print r3.content
 
     # TODO: 进行后续任意已登录的操作
 
