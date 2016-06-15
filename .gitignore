@@ -3,9 +3,7 @@ config.ini
 # .pyc
 *.pyc
 # .png
-*.png
 
-!executing-process.png
 # private info
 fengcaidasai.txt
 x.js
