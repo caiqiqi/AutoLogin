@@ -1,7 +1,7 @@
 # 主要是用于学校研究生管理系统的自动登录
 YouTube地址：https://www.youtube.com/watch?v=K4LTgzm9G3w </br>
 秒拍视频：http://weibo.com/p/230444427857313e89770690bec69367024c29 </br>
-心路历程: ![心路历程](https://github.com/caiqiqi/AutoLogin/blob/master/executing-process.png) </br>
+心路历程: ![心路历程](https://github.com/caiqiqi/AutoLogin/blob/master/process.png) </br>
 登录成功页面: ![登录成功界面](https://github.com/caiqiqi/AutoLogin/blob/master/loging.aspx.png)
 已登录的默认页面: ![已登录的默认页面](https://github.com/caiqiqi/AutoLogin/blob/master/default.aspx.png)
 
