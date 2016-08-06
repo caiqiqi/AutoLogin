@@ -1,9 +1,9 @@
 # 主要是用于学校研究生管理系统的自动登录
 YouTube地址：https://www.youtube.com/watch?v=K4LTgzm9G3w </br>
 秒拍视频：http://weibo.com/p/230444427857313e89770690bec69367024c29 </br>
-心路历程: ![心路历程](https://github.com/caiqiqi/AutoLogin/blob/master/process.png) </br>
-登录成功页面: ![登录成功界面](https://github.com/caiqiqi/AutoLogin/blob/master/loging.aspx.png)
-已登录的默认页面: ![已登录的默认页面](https://github.com/caiqiqi/AutoLogin/blob/master/default.aspx.png)
+心路历程: ![心路历程](img/process.png) </br>
+登录成功页面: ![登录成功界面](img/loging.aspx.png)
+已登录的默认页面: ![已登录的默认页面](img/default.aspx.png)
 
 ## student-login-final.py
 <p>通过Chrome/Firefox的开发者工具以及Burp Suite分析登录过程的HTTP通信细节，然后用python实现对目标网站在给定学号密码情况下的自动登录。</br> </p>
