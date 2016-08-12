@@ -7,7 +7,7 @@ YouTube地址：https://www.youtube.com/watch?v=K4LTgzm9G3w </br>
 
 ## student-login-final.py
 通过Chrome/Firefox的开发者工具以及Burp Suite分析登录过程的HTTP通信细节，然后用python实现对目标网站在给定学号密码情况下的自动登录。</br>
-## 难点
+## 思路
 分析整个HTTP通信过程。实际用浏览器登录时由于有各种css/js/png文件，还有像WebResource.axd，ScriptResource.axd这种让你迷惑不知重不重要的文件。通过分析和实验，发现主要有三个HTTP请求。</br>
 1. 先请求登录页面 `http://gs.cqupt.edu.cn:8080/gstudent/loging.aspx?undefined` </br>如果已登录未退出这个session还是已登录的状态，或者登录过期这个session虽然已失效但是sessionId还在，这种情况下不会新建session，而是沿用之前的session，服务器端返回的请求中不会『Set-cookie』。如果不是以上情况，则会在这第一次请求之后服务器在返回的响应中通过『Set-cookie』发给客户端一个cookie，这个cookie的内容就是这次session的sessionId。如果直接用requests库的get/post方法，则会在headers(HTTP的请求头)中将connection字段设置为closed，这样不利用之后的请求沿用之前的cookie以保持同一次session，导致服务器在登录认证的过程中不能将之后的请求与之前的请求联系起来，最终返回302重定向到这个页面 `http://gs.cqupt.edu.cn:8080/gstudent/ReLogin.aspx?ReturnUrl=/gstudent/loging.aspx?undefined` </br> 让用户重新登录从而登录失败。</br>
 在第一次发出的get请求后还要从返回的html页面中找出三个重要参数供后续的请求中用到。这三个参数是：登录的最后一步提交post请求时的表单里的数据*__VIEWSTATE*和*EVENTVALIDATION*字段；以及第二次get请求图片验证码时用到的`?image=124685645`类似这样的参数。</br>
