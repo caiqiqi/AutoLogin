@@ -29,8 +29,6 @@ _url_captcha      = "http://gs.cqupt.edu.cn:8080/Public/ValidateCode.aspx"
 _url_loging       = "http://gs.cqupt.edu.cn:8080/gstudent/loging.aspx?undefined"
 _url_relogin      = "http://gs.cqupt.edu.cn:8080/gstudent/ReLogin.aspx?ReturnUrl=/gstudent/loging.aspx?undefined"
 _url_course_query = "http://gs.cqupt.edu.cn:8080/gstudent/Course/CourseSelQuery.aspx?EID=Ng!0IdeEcMBa4v7gTkZteOPL5Mjmu7TIBdO8k2iXxW479MCMokufJQ=="
-_url_exam_info    = "http://gs.cqupt.edu.cn:8080/gstudent/Course/CourseTestInfo.aspx?EID=wlt4FUXSIZqP8ASNy5fY7O3mF9B6EclOO8VWx82rzmj1PxzhUTNKUg=="
-
 
 headers0 = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.84 Safari/537.36",
@@ -148,10 +146,10 @@ def main():
     VIEWSTATE, EVENTVALIDATION, url_captcha_tmp = parse_to_post_params(_r0.content)
     # 分割出从页面中得到的参数并将其连接到验证码的url上去
     _url_captcha = _url_captcha + "?" + url_captcha_tmp.split('?')[1]
-    print VIEWSTATE
-    print EVENTVALIDATION
-    print "待访问的带随机数字的验证码的url："
-    print _url_captcha
+    #print VIEWSTATE
+    #print EVENTVALIDATION
+    #print "待访问的带随机数字的验证码的url："
+    #print _url_captcha
 
     # 从向这个url发出请求,然后将得到的图片保存到本地，最后解析图片成文字
     _result_captcha = save_img_to_file_and_get_result(_url_captcha, _file_captcha)
@@ -171,10 +169,7 @@ def main():
     # 课程查询
     r2 = s.get(_url_course_query, headers=headers_query)
     print r2.url
-    # 考试查询
-    r3 = s.get(_url_exam_info, headers=headers_query)
-    print r3.url
-    print r3.content
+    print r2.content
 
     # TODO: 进行后续任意已登录的操作
 
