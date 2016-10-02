@@ -10,8 +10,8 @@ import pytesseract
 from PIL import Image
 from bs4 import BeautifulSoup
 
-import url
-import headers
+from url import *
+from headers import *
 
 
 # 开始就用一个session来维持整个回话，这样在之后请求中可以沿用之前的headers，
