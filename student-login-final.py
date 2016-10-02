@@ -18,14 +18,14 @@ from headers import *
 # 而且可以往headers里添加已有的字段以覆盖之前的字段，这样connection才是『keep-alive』，而不是close
 s = requests.Session()
 
-CONFIG_FILE = 'config.ini'
+CONFIG_FILE      = 'config.ini'
 CONFIG_ITEM_INFO = 'info'
 
-_username = ''
-_password = ''
-_result_captcha = ''
+_username        = ''
+_password        = ''
+_result_captcha  = ''
 
-file_captcha     = "captcha.png"
+file_captcha     = 'captcha.png'
 
 
 
@@ -112,9 +112,9 @@ def main():
         print "[*] 登录成功 !\n"
 
     # 已选课程查询
-    r2 = s.get(url_course_query, headers = headers_query)
+    r2 = s.get(url_course_selected, headers = headers_query)
     print "[*] 已选课程查询"
-    print parse_html(r2.content, url_course_query) 
+    print parse_html(r2.content, url_course_selected) 
     # 课程成绩查询
     r3 = s.get(url_course_score, headers = headers_query)
     print "[*] 课程成绩查询"
