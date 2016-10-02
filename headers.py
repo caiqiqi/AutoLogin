@@ -1,3 +1,4 @@
+#coding=utf-8
 '''
 headers_get:    GET到登录页面用到的
 headers_image:  获取验证码图片用到的

@@ -1,3 +1,4 @@
+#coding=utf-8
 '''
 url_course_selected:  选课结果信息查询
 url_course_score:     课程成绩信息查询
