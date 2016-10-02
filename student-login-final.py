@@ -2,6 +2,7 @@
 #coding=utf-8
 __author__ = 'caiqiqi'
 
+import sys
 import os
 import ConfigParser
 
@@ -14,9 +15,7 @@ from url import *
 from headers import *
 
 
-# 开始就用一个session来维持整个回话，这样在之后请求中可以沿用之前的headers，
-# 而且可以往headers里添加已有的字段以覆盖之前的字段，这样connection才是『keep-alive』，而不是close
-s = requests.Session()
+version          = '2.0'
 
 CONFIG_FILE      = 'config.ini'
 CONFIG_ITEM_INFO = 'info'
@@ -27,7 +26,34 @@ _result_captcha  = ''
 
 file_captcha     = 'captcha.png'
 
+# 开始就用一个session来维持整个回话，这样在之后请求中可以沿用之前的headers，
+# 而且可以往headers里添加已有的字段以覆盖之前的字段，这样connection才是『keep-alive』，而不是close
+s = requests.Session()
 
+
+def print_help(version):
+    print "-------------------------------------"
+    print "[*] student-login v{} by CaiQiqi :)".format(version)
+    print
+    print " --course-selected || -c       Show courses you have already selected in this semester."
+    print " --course-score || -s          Show the scores of all your courses."
+    print " --course-exam-info || -i      Show your exam info of this semester, if any."
+    print " --help || -h                  Print this help message."
+
+
+def parse_cmd():
+    try:
+        if sys.argv[1] == "--course-selected" or sys.argv[1] == "-c":
+            show_course_selected()
+        elif sys.argv[1] == "--course-score" or sys.argv[1] == "-s":
+            show_course_score()
+        elif sys.argv[1] == "--course-exam-info" or sys.argv[1] == "-i":
+            show_course_exam_info()
+        elif sys.argv[1] == "--help" or sys.argv[1] == "-h":
+            print_help(version)
+    
+    except IndexError:
+        print "[!] 请检查参数个数, 输入 --help 或者 -h查看帮助信息"
 
 
 def _get_item_from_ini():
@@ -82,6 +108,25 @@ def parse_html(html_str, p_url):
         return soup.find(id = "ctl00_contentParent_dgData")
 
 
+# 已选课程查询
+def show_course_selected():
+    r2 = s.get(url_course_selected, headers = headers_query)
+    print "[*] 已选课程查询"
+    print parse_html(r2.content, url_course_selected)
+
+# 课程成绩查询
+def show_course_score():
+    r3 = s.get(url_course_score, headers = headers_query)
+    print "[*] 课程成绩查询"
+    print parse_html(r3.content, url_course_score)
+
+# 学期考试信息查询
+def show_course_exam_info():
+    r4 = s.get(url_course_exam_info, headers = headers_query)
+    print "[*] 学期考试信息查询"
+    print parse_html(r4.content, url_course_exam_info)
+
+
 
 def main():
     global url_captcha
@@ -110,19 +155,12 @@ def main():
     r1 = s.post(url_relogin, data= payload, headers=headers_post)
     if r1.status_code == 200:
         print "[*] 登录成功 !\n"
+    else:
+        print "[*] 登录失败 !\n"
+        exit(1)
 
-    # 已选课程查询
-    r2 = s.get(url_course_selected, headers = headers_query)
-    print "[*] 已选课程查询"
-    print parse_html(r2.content, url_course_selected) 
-    # 课程成绩查询
-    r3 = s.get(url_course_score, headers = headers_query)
-    print "[*] 课程成绩查询"
-    print parse_html(r3.content, url_course_score)
-    # 学期考试信息查询
-    r4 = s.get(url_course_exam_info, headers = headers_query)
-    print "[*] 学期考试信息查询"
-    print parse_html(r4.content, url_course_exam_info)
+    # 解析命名行参数
+    parse_cmd()
 
 
 if __name__ == "__main__":
