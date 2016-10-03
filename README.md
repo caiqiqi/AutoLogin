@@ -33,3 +33,8 @@ password = XXXXX
 - **pytesseract**: 开源图像识别库。它的image_to_string()可以将一个PIL.Image包装的图片文件识别出其中的文字信息，并返回该字符串。
 - **bs4.BeautifulSoup**: 解析xml/html的库。这里用于查找hidden的*__VIEWSTATE* 和 *EVENTVALIDATION*。也可用lxml或者正则re。
 
+## TODO
+- 优化登录失败的逻辑
+- 更精确地解析出有效信息(xpath或re)
+- 首次登录后保存cookie到本地供下次用，用一个session维持一次查询全过程
+- 打印出用户可查询的信息选项供用户选择
