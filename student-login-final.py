@@ -26,8 +26,11 @@ _result_captcha  = ''
 
 file_captcha     = 'captcha.png'
 
+# for requests
+TIME_OUT         = 5
+
 # 开始就用一个session来维持整个回话，这样在之后请求中可以沿用之前的headers，
-# 而且可以往headers里添加已有的字段以覆盖之前的字段，这样connection才是『keep-alive』，而不是close
+# 而且可以往headers里添加已有的字段以覆盖之前的字段，这样connection才是 *keep-alive*，而不是*close*
 s = requests.Session()
 
 
@@ -43,37 +46,38 @@ def print_help(version):
 
 def print_options():
     print
-    print "#1  选课结果信息查询"
-    print "#2  课程成绩信息查询"
-    print "#3  学期考试信息查询"
+    print "  #1  选课结果"
+    print "  #2  课程成绩"
+    print "  #3  学期考试"
     print
     print
-    print
-    print "[*] 请输入对应的序号, 以进行相应的查询! 查询完成后按 Q/q 退出 \n"
+    print "[*] 请输入对应的序号, 以进行相应的查询! 查询完成后按 [Q/q] 退出 \n"
     
 
 def get_input():
-    print ">"
+    # print后面加逗号可以不换行
+    print ">" ,
+    cmd = ""
     cmd = raw_input()
     try:
         
-        if cmd == 1:
+        if cmd == "1":
             # 选课结果信息查询
             show_course_selected(s)
             get_input()
-        elif cmd == 2:
+        elif cmd == "2":
             # 课程成绩信息查询
             show_course_score(s)
             get_input()
-        elif cmd == 3:
+        elif cmd == "3":
             # 学期考试信息查询
             show_course_exam_info(s)
             get_input()
         elif cmd == "q" or cmd == "Q":
             exit(0)
-    except IndexError:
-        print "[!] 请输入可选的选项!"
-        exit(1)
+    except Exception as e:
+        print "[!] Exception caught: {}".format(e)
+        #print "[!] 请输入可选的选项!"
 
 
 
@@ -150,20 +154,20 @@ def parse_html(html_str, p_url):
 
 # 已选课程查询
 def show_course_selected(session):
-    response = session.get(url_course_selected, headers = headers_query)
-    print "[*] 已选课程查询"
+    response = session.get(url_course_selected, headers = headers_query, timeout = TIME_OUT)
+    print "[*] 已选课程"
     print parse_html(response.content, url_course_selected)
 
 # 课程成绩查询
 def show_course_score(session):
-    response = session.get(url_course_score, headers = headers_query)
-    print "[*] 课程成绩查询"
+    response = session.get(url_course_score, headers = headers_query, timeout = TIME_OUT)
+    print "[*] 课程成绩"
     print parse_html(response.content, url_course_score)
 
 # 学期考试信息查询
 def show_course_exam_info(session):
-    response = session.get(url_course_exam_info, headers = headers_query)
-    print "[*] 学期考试信息查询"
+    response = session.get(url_course_exam_info, headers = headers_query, timeout = TIME_OUT)
+    print "[*] 考试信息"
     print parse_html(response.content, url_course_exam_info)
 
 
@@ -177,7 +181,7 @@ def main():
 
 
     # 先GET到`登录页面`
-    r0 = s.get(url_loging, headers = headers_get)
+    r0 = s.get(url_loging, headers = headers_get, timeout = TIME_OUT)
     VIEWSTATE, EVENTVALIDATION, url_captcha_tmp = parse_html(r0.content, url_loging)
     # 分割出从页面中得到的参数并将其连接到验证码的url上去
     url_captcha = url_captcha + "?" + url_captcha_tmp.split('?')[1]
@@ -195,7 +199,7 @@ def main():
     payload = '__EVENTTARGET=ctl00$contentParent$btLogin&__EVENTARGUMENT=&__VIEWSTATE='+ VIEWSTATE+ '&' +'__EVENTVALIDATION='+ EVENTVALIDATION + '&' +'ctl00$contentParent$UserName='+ _username + '&' +'ctl00$contentParent$PassWord='+ _password + '&' +'ctl00$contentParent$ValidateCode='+ _result_captcha
 
     # 登录
-    r1 = s.post(url_relogin, data = payload, headers = headers_post)
+    r1 = s.post(url_relogin, data = payload, headers = headers_post, timeout = TIME_OUT)
     if r1.status_code == 200:
         # 只有返回页面的url跟 `url_loging` 一样, 才是登录成功
         if str(r1.url) == url_loging:
