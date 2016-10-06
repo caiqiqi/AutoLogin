@@ -2,6 +2,7 @@
 config.ini
 # .pyc
 *.pyc
+captcha.png
 # .png
 
 # private info

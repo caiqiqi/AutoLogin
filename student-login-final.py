@@ -152,11 +152,17 @@ def main():
     payload = '__EVENTTARGET=ctl00$contentParent$btLogin&__EVENTARGUMENT=&__VIEWSTATE='+ VIEWSTATE+ '&' +'__EVENTVALIDATION='+ EVENTVALIDATION + '&' +'ctl00$contentParent$UserName='+ _username + '&' +'ctl00$contentParent$PassWord='+ _password + '&' +'ctl00$contentParent$ValidateCode='+ _result_captcha
 
     # 登录
-    r1 = s.post(url_relogin, data= payload, headers=headers_post)
+    r1 = s.post(url_relogin, data = payload, headers = headers_post)
     if r1.status_code == 200:
-        print "[*] 登录成功 !\n"
+        # 只有返回页面的url跟 `url_loging` 一样, 才是登录成功
+        if str(r1.url) == url_loging:
+            print "[*] 登录成功 !\n"
+        else:
+            print "[!] 登录失败 ! 状态码: %d\n" % r1.status_code
+            print "[!] 当前url为: %s\n" % str(r1.url)
     else:
-        print "[*] 登录失败 !\n"
+        print "[!] 登录失败 ! 状态码: %d\n" % r1.status_code
+        print "[!] 当前url为: %s\n" % str(r1.url)
         exit(1)
 
     # 解析命名行参数
