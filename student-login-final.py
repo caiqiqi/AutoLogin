@@ -41,6 +41,43 @@ def print_help(version):
     print " --help || -h                  Print this help message."
 
 
+def print_options():
+    print
+    print "#1  选课结果信息查询"
+    print "#2  课程成绩信息查询"
+    print "#3  学期考试信息查询"
+    print
+    print
+    print
+    print "[*] 请输入对应的序号, 以进行相应的查询! 查询完成后按 Q/q 退出 \n"
+    
+
+def get_input():
+    print ">"
+    cmd = raw_input()
+    try:
+        
+        if cmd == 1:
+            # 选课结果信息查询
+            show_course_selected(s)
+            get_input()
+        elif cmd == 2:
+            # 课程成绩信息查询
+            show_course_score(s)
+            get_input()
+        elif cmd == 3:
+            # 学期考试信息查询
+            show_course_exam_info(s)
+            get_input()
+        elif cmd == "q" or cmd == "Q":
+            exit(0)
+    except IndexError:
+        print "[!] 请输入可选的选项!"
+        exit(1)
+
+
+
+
 def parse_cmd():
     try:
         if sys.argv[1] == "--course-selected" or sys.argv[1] == "-c":
@@ -54,6 +91,8 @@ def parse_cmd():
     
     except IndexError:
         print "[!] 请检查参数个数, 输入 --help 或者 -h查看帮助信息"
+        exit(1)
+
 
 
 def _get_item_from_ini():
@@ -83,6 +122,7 @@ def save_img_to_file_and_get_result(imageUrl, filename):
         return result
     else:
         print "[!] 解析验证码错误！\n"
+        exit(1)
 
 
 
@@ -109,22 +149,22 @@ def parse_html(html_str, p_url):
 
 
 # 已选课程查询
-def show_course_selected():
-    r2 = s.get(url_course_selected, headers = headers_query)
+def show_course_selected(session):
+    response = session.get(url_course_selected, headers = headers_query)
     print "[*] 已选课程查询"
-    print parse_html(r2.content, url_course_selected)
+    print parse_html(response.content, url_course_selected)
 
 # 课程成绩查询
-def show_course_score():
-    r3 = s.get(url_course_score, headers = headers_query)
+def show_course_score(session):
+    response = session.get(url_course_score, headers = headers_query)
     print "[*] 课程成绩查询"
-    print parse_html(r3.content, url_course_score)
+    print parse_html(response.content, url_course_score)
 
 # 学期考试信息查询
-def show_course_exam_info():
-    r4 = s.get(url_course_exam_info, headers = headers_query)
+def show_course_exam_info(session):
+    response = session.get(url_course_exam_info, headers = headers_query)
     print "[*] 学期考试信息查询"
-    print parse_html(r4.content, url_course_exam_info)
+    print parse_html(response.content, url_course_exam_info)
 
 
 
@@ -144,6 +184,9 @@ def main():
 
     # 从向这个url发出请求,然后将得到的图片保存到本地，最后解析图片成文字
     _result_captcha = save_img_to_file_and_get_result(url_captcha, file_captcha)
+    if not _result_captcha:
+        print "[!] 验证码获取或解析失败 !"
+        exit(1)
     print "[*] 验证码: %s\n" % _result_captcha
 
 
@@ -160,13 +203,19 @@ def main():
         else:
             print "[!] 登录失败 ! 状态码: %d\n" % r1.status_code
             print "[!] 当前url为: %s\n" % str(r1.url)
+            exit(1)
     else:
         print "[!] 登录失败 ! 状态码: %d\n" % r1.status_code
         print "[!] 当前url为: %s\n" % str(r1.url)
         exit(1)
 
     # 解析命名行参数
-    parse_cmd()
+    #parse_cmd()
+
+    # 打印可用选项
+    print_options()
+    # 解析用户输入
+    get_input()
 
 
 if __name__ == "__main__":
