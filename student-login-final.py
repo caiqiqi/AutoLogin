@@ -10,9 +10,11 @@ import requests
 import pytesseract
 from PIL import Image
 from bs4 import BeautifulSoup
+import lxml.html
 
 from url import *
 from headers import *
+from utils import color
 
 
 version          = '2.0'
@@ -56,7 +58,7 @@ def print_options():
 
 def get_input():
     # print后面加逗号可以不换行
-    print ">" ,
+    print color("QAQ >", "red"),
     cmd = ""
     cmd = raw_input()
     try:
@@ -130,8 +132,8 @@ def save_img_to_file_and_get_result(imageUrl, filename):
 
 
 
-# 解析各种html页面
-def parse_html(html_str, p_url):
+# 用`BeautifulSoup`解析各种html页面
+def parse_html_by_bs(html_str, p_url):
 
     soup = BeautifulSoup(html_str, "lxml")  # soup 就是BeautifulSoup处理格式化后的字符串
     # 解析`loging`页面, 从中获取 1# VIEWSTATE, 2# EVENTVALIDATION, 3# 验证码带随机数字的url
@@ -143,32 +145,39 @@ def parse_html(html_str, p_url):
         return __VIEWSTATE, __EVENTVALIDATION, _validatecode_url
     # 解析`已选课程`页面, 从中获取已选课程的内容
     elif url_course_selected == p_url:
-        return soup.find(id = "ctl00_contentParent_dgData")
+        print soup.find(id = "ctl00_contentParent_dgData").get_text(separator=u'  ')  # strip=True
     # 解析`课程成绩`页面, 从中获取各科成绩
     elif url_course_score == p_url:
-        return soup.find(id = "ctl00_contentParent_dgData")
+        # unicode类型
+        print soup.find(id = "ctl00_contentParent_dgData").get_text(separator=u'  ') # strip=True
+    
     # 解析`考试信息`页面, 从中获取考试信息
     elif url_course_exam_info == p_url:
-        return soup.find(id = "ctl00_contentParent_dgData")
+        print soup.find(id = "ctl00_contentParent_dgData").tr.td.get_text()
+
+#TODO 用`xpath`解析各种html页面
+def parse_html_by_xpath(html_str, p_xpath):
+    html_xpathed = lxml.html.document_fromstring(html_str).xpath(p_xpath)
+    print html_xpathed
 
 
 # 已选课程查询
 def show_course_selected(session):
     response = session.get(url_course_selected, headers = headers_query, timeout = TIME_OUT)
-    print "[*] 已选课程"
-    print parse_html(response.content, url_course_selected)
+    print "=============== 已选课程 ==============="
+    parse_html_by_bs(response.content, url_course_selected)
 
 # 课程成绩查询
 def show_course_score(session):
     response = session.get(url_course_score, headers = headers_query, timeout = TIME_OUT)
-    print "[*] 课程成绩"
-    print parse_html(response.content, url_course_score)
+    print "=============== 课程成绩 ==============="
+    parse_html_by_bs(response.content, url_course_score)
 
 # 学期考试信息查询
 def show_course_exam_info(session):
     response = session.get(url_course_exam_info, headers = headers_query, timeout = TIME_OUT)
-    print "[*] 考试信息"
-    print parse_html(response.content, url_course_exam_info)
+    print "=============== 考试信息 ==============="
+    parse_html_by_bs(response.content, url_course_exam_info)
 
 
 
@@ -182,7 +191,7 @@ def main():
 
     # 先GET到`登录页面`
     r0 = s.get(url_loging, headers = headers_get, timeout = TIME_OUT)
-    VIEWSTATE, EVENTVALIDATION, url_captcha_tmp = parse_html(r0.content, url_loging)
+    VIEWSTATE, EVENTVALIDATION, url_captcha_tmp = parse_html_by_bs(r0.content, url_loging)
     # 分割出从页面中得到的参数并将其连接到验证码的url上去
     url_captcha = url_captcha + "?" + url_captcha_tmp.split('?')[1]
 
@@ -204,8 +213,9 @@ def main():
         # 只有返回页面的url跟 `url_loging` 一样, 才是登录成功
         if str(r1.url) == url_loging:
             print "[*] 登录成功 !\n"
+            print s.cookies  #['Set-Cookie']
         else:
-            print "[!] 登录失败 ! 状态码: %d\n" % r1.status_code
+            print "[!] 登录失败 ! 状态码: %d" % r1.status_code
             print "[!] 当前url为: %s\n" % str(r1.url)
             exit(1)
     else:
@@ -216,10 +226,9 @@ def main():
     # 解析命名行参数
     #parse_cmd()
 
-    # 打印可用选项
-    print_options()
-    # 解析用户输入
-    get_input()
+    
+    print_options()   # 打印可用选项
+    get_input()       # 解析用户输入
 
 
 if __name__ == "__main__":
