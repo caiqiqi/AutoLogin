@@ -1,5 +1,6 @@
 # config.ini ignored
 config.ini
+info.txt
 # .pyc
 *.pyc
 captcha.png
