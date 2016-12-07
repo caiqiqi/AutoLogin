@@ -4,6 +4,9 @@ __author__ = 'caiqiqi'
 
 import sys
 import os
+import time
+from base64 import b64encode as e
+from base64 import b64decode as d
 import ConfigParser
 
 import requests
@@ -16,29 +19,31 @@ from url import *
 from headers import *
 from utils import color
 
+class Info():
 
-version          = '2.0'
+    version              = '2.0'
+    CONFIG_FILE          = 'config.ini'
+    CONFIG_ITEM_INFO     = 'info'
+    CONFIG_ITEM_COOKIES  = 'cookies'
+    SESSIONID            = 'ASP.NET_SessionId'
+    _username            = ''
+    _password            = ''
+    _sessionId           = ''
+    _result_captcha      = ''
+    cf = ConfigParser.ConfigParser()
 
-CONFIG_FILE      = 'config.ini'
-CONFIG_ITEM_INFO = 'info'
-
-_username        = ''
-_password        = ''
-_result_captcha  = ''
-
-file_captcha     = 'captcha.png'
-
-# for requests
-TIME_OUT         = 5
+    file_captcha         = 'captcha.png'
+    TIME_OUT             = 10      # for requests, 单位s
+    is_login             = False   # 判断是否已登录
+    cookies              = []
 
 # 开始就用一个session来维持整个回话，这样在之后请求中可以沿用之前的headers，
 # 而且可以往headers里添加已有的字段以覆盖之前的字段，这样connection才是 *keep-alive*，而不是*close*
 s = requests.Session()
 
-
 def print_help(version):
     print "-------------------------------------"
-    print "[*] student-login v{} by CaiQiqi :)".format(version)
+    print "[*] student-login v{} by CaiQiqi :)".format(Info.version)
     print
     print " --course-selected || -c       Show courses you have already selected in this semester."
     print " --course-score || -s          Show the scores of all your courses."
@@ -81,7 +86,8 @@ def get_input():
         print "[!] Exception caught: {}".format(e)
         #print "[!] 请输入可选的选项!"
 
-
+def get_cookies():
+    return Info.cookies
 
 
 def parse_cmd():
@@ -100,18 +106,23 @@ def parse_cmd():
         exit(1)
 
 
-
-def _get_item_from_ini():
+#TODO
+def load_info_from_ini():
     '''
     从.ini文件中载入账户密码信息
     '''
-    global _username
-    global _password
+    Info.cf.read(Info.CONFIG_FILE)
 
-    cf = ConfigParser.ConfigParser()
-    cf.read(CONFIG_FILE)
-    _username = cf.get(CONFIG_ITEM_INFO, 'username')
-    _password = cf.get(CONFIG_ITEM_INFO, 'password')
+    Info._username  = Info.cf.get(Info.CONFIG_ITEM_INFO, 'username')
+    Info._password  = d(d(d(Info.cf.get(Info.CONFIG_ITEM_INFO, 'password'))))
+
+    if Info.cf.has_section(Info.CONFIG_ITEM_COOKIES):
+        if Info.cf.has_option(Info.CONFIG_ITEM_COOKIES, Info.SESSIONID):
+            if Info.cf.get(Info.CONFIG_ITEM_COOKIES, Info.SESSIONID):
+                Info.is_login = True  # 从.ini文件中找到了cookie,则认为已登录
+                cook = { Info.SESSIONID: Info.cf.get(Info.CONFIG_ITEM_COOKIES, Info.SESSIONID) }
+                Info.cookies.append(cook)
+    
 
 
 def save_img_to_file_and_get_result(imageUrl, filename):
@@ -130,7 +141,16 @@ def save_img_to_file_and_get_result(imageUrl, filename):
         print "[!] 解析验证码错误！\n"
         exit(1)
 
-
+def save_cookies(cook):
+    # 先将cookie加入到Info的cookies中, 可供本次运行脚本的其他时候使用
+    Info.cookies.append(cook)
+    # 确保有cookies这个section
+    if not Info.cf.has_section(Info.CONFIG_ITEM_COOKIES):
+        Info.cf.add_section(Info.CONFIG_ITEM_COOKIES)
+    Info.cf.set(Info.CONFIG_ITEM_COOKIES, Info.SESSIONID, cook[Info.SESSIONID])
+    # 写入到该.ini文件, 以便以后再次运行该脚本可以从文件中读入
+    with open(Info.CONFIG_FILE, "w+") as f:
+        Info.cf.write(f)
 
 # 用`BeautifulSoup`解析各种html页面
 def parse_html_by_bs(html_str, p_url):
@@ -163,72 +183,84 @@ def parse_html_by_xpath(html_str, p_xpath):
 
 # 已选课程查询
 def show_course_selected(session):
-    response = session.get(url_course_selected, headers = headers_query, timeout = TIME_OUT)
+    response = session.get(url_course_selected, headers = headers_query, timeout = Info.TIME_OUT, cookies=Info.cookies[0])
     print "=============== 已选课程 ==============="
     parse_html_by_bs(response.content, url_course_selected)
 
 # 课程成绩查询
 def show_course_score(session):
-    response = session.get(url_course_score, headers = headers_query, timeout = TIME_OUT)
+    response = session.get(url_course_score, headers = headers_query, timeout = Info.TIME_OUT, cookies=Info.cookies[0])
     print "=============== 课程成绩 ==============="
     parse_html_by_bs(response.content, url_course_score)
 
 # 学期考试信息查询
 def show_course_exam_info(session):
-    response = session.get(url_course_exam_info, headers = headers_query, timeout = TIME_OUT)
+    response = session.get(url_course_exam_info, headers = headers_query, timeout = Info.TIME_OUT, cookies=Info.cookies[0])
     print "=============== 考试信息 ==============="
     parse_html_by_bs(response.content, url_course_exam_info)
 
 
-
-def main():
+def login(session):
     global url_captcha
-    global _result_captcha
-
-    _get_item_from_ini()  # 从ini文件中解析出账号密码信息
-    print(_username)
-
 
     # 先GET到`登录页面`
-    r0 = s.get(url_loging, headers = headers_get, timeout = TIME_OUT)
+    r0 = s.get(url_loging, headers = headers_get, timeout = Info.TIME_OUT)
     VIEWSTATE, EVENTVALIDATION, url_captcha_tmp = parse_html_by_bs(r0.content, url_loging)
     # 分割出从页面中得到的参数并将其连接到验证码的url上去
     url_captcha = url_captcha + "?" + url_captcha_tmp.split('?')[1]
 
     # 从向这个url发出请求,然后将得到的图片保存到本地，最后解析图片成文字
-    _result_captcha = save_img_to_file_and_get_result(url_captcha, file_captcha)
+    _result_captcha = save_img_to_file_and_get_result(url_captcha, Info.file_captcha)
     if not _result_captcha:
         print "[!] 验证码获取或解析失败 !"
         exit(1)
-    print "[*] 验证码: %s\n" % _result_captcha
-
-
+    print "[*] 验证码: %s" % _result_captcha
 
     # 将解析到的结果告诉url_payload
-    payload = '__EVENTTARGET=ctl00$contentParent$btLogin&__EVENTARGUMENT=&__VIEWSTATE='+ VIEWSTATE+ '&' +'__EVENTVALIDATION='+ EVENTVALIDATION + '&' +'ctl00$contentParent$UserName='+ _username + '&' +'ctl00$contentParent$PassWord='+ _password + '&' +'ctl00$contentParent$ValidateCode='+ _result_captcha
+    payload = '__EVENTTARGET=ctl00$contentParent$btLogin&__EVENTARGUMENT=&__VIEWSTATE='+ VIEWSTATE+ '&' +'__EVENTVALIDATION='+ EVENTVALIDATION + '&' +'ctl00$contentParent$UserName='+ Info._username + '&' +'ctl00$contentParent$PassWord='+ Info._password + '&' +'ctl00$contentParent$ValidateCode='+ _result_captcha
 
     # 登录
-    r1 = s.post(url_relogin, data = payload, headers = headers_post, timeout = TIME_OUT)
+    r1 = s.post(url_relogin, data = payload, headers = headers_post, timeout = Info.TIME_OUT)
     if r1.status_code == 200:
         # 只有返回页面的url跟 `url_loging` 一样, 才是登录成功
         if str(r1.url) == url_loging:
             print "[*] 登录成功 !\n"
-            print s.cookies  #['Set-Cookie']
+            cookie = s.cookies.get_dict()
+            save_cookies(cookie)    # 保存cookie
+            print cookie
+            return True
         else:
             print "[!] 登录失败 ! 状态码: %d" % r1.status_code
-            print "[!] 当前url为: %s\n" % str(r1.url)
-            exit(1)
+            print "[!] 当前cookie为: %s" % Info.cookies
+            print "[!] 当前url为: %s" % str(r1.url)
+            print "\n"
+            return False
+            #exit(1)
     else:
         print "[!] 登录失败 ! 状态码: %d\n" % r1.status_code
-        print "[!] 当前url为: %s\n" % str(r1.url)
-        exit(1)
+        print "[!] 当前cookie为: %s" % Info.cookies
+        print "[!] 当前url为: %s" % str(r1.url)
+        print "\n"
+        return False
+        #exit(1)
 
-    # 解析命名行参数
-    #parse_cmd()
 
-    
-    print_options()   # 打印可用选项
-    get_input()       # 解析用户输入
+def main():
+    load_info_from_ini()  # 从ini文件中解析出账号密码信息
+    print(Info._username)
+
+    # 若未登录，则循环进行登录操作
+    while not Info.is_login:
+        time.sleep(3)
+        print "[!] 未登录"
+        print "[*] 正在登录..."
+        Info.is_login = login(s)
+
+    if Info.cookies:
+        print "[*] 已登录"
+        #parse_cmd()      # 解析命名行参数
+        print_options()   # 打印可用选项
+        get_input()       # 解析用户输入
 
 
 if __name__ == "__main__":
