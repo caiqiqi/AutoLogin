@@ -21,7 +21,7 @@ from utils import color
 
 class Info():
 
-    version              = '2.0'
+    version              = '2.6'
     CONFIG_FILE          = 'config.ini'
     CONFIG_ITEM_INFO     = 'info'
     CONFIG_ITEM_COOKIES  = 'cookies'
@@ -33,6 +33,7 @@ class Info():
     cf = ConfigParser.ConfigParser()
 
     file_captcha         = 'captcha.png'
+    _COOKIE_TIME_OUT     = 120     # cookie连续使用时间间隔 s
     TIME_OUT             = 10      # for requests, 单位s
     is_login             = False   # 判断是否已登录
     cookies              = []
@@ -53,6 +54,7 @@ def print_help(version):
 
 def print_options():
     print
+    print "  #0  登录日志"
     print "  #1  选课结果"
     print "  #2  课程成绩"
     print "  #3  学期考试"
@@ -80,6 +82,10 @@ def get_input():
             # 学期考试信息查询
             show_course_exam_info(s)
             get_input()
+        elif cmd == "0":
+            # 登录历史
+            show_history(s)
+            get_input()
         elif cmd == "q" or cmd == "Q":
             exit(0)
     except Exception as e:
@@ -92,6 +98,10 @@ def get_cookies():
 
 def parse_cmd():
     try:
+        # 若没有参数，则什么也不做
+        if not sys.argv[1]:
+            pass
+
         if sys.argv[1] == "--course-selected" or sys.argv[1] == "-c":
             show_course_selected()
         elif sys.argv[1] == "--course-score" or sys.argv[1] == "-s":
@@ -100,28 +110,48 @@ def parse_cmd():
             show_course_exam_info()
         elif sys.argv[1] == "--help" or sys.argv[1] == "-h":
             print_help(version)
-    
+    # 若参数太多, 则抛出错误
     except IndexError:
         print "[!] 请检查参数个数, 输入 --help 或者 -h查看帮助信息"
         exit(1)
 
 
-#TODO
 def load_info_from_ini():
     '''
     从.ini文件中载入账户密码信息
     '''
+    is_cookie_timeout = False
+    print "[*] 文件访问时间: %s" \
+        %(time.ctime(os.stat(Info.CONFIG_FILE).st_atime))   # .st_mtime, .st_ctime
+
+    time_last = os.stat(Info.CONFIG_FILE).st_atime   # 上次访问时间
+    time_now  = time.time()
+    # 若距离上次访问时间超过一定时间，则清除cookie
+    if (time_now - time_last) > Info._COOKIE_TIME_OUT:
+        is_cookie_timeout = True
+    
     Info.cf.read(Info.CONFIG_FILE)
+    if is_cookie_timeout:
+        print "[*] Removing cookies"
+        rm_cookie()
 
     Info._username  = Info.cf.get(Info.CONFIG_ITEM_INFO, 'username')
     Info._password  = d(d(d(Info.cf.get(Info.CONFIG_ITEM_INFO, 'password'))))
 
+    # 若从.ini文件中读cookie, 则认为该cookie有效(登录成功的)
     if Info.cf.has_section(Info.CONFIG_ITEM_COOKIES):
         if Info.cf.has_option(Info.CONFIG_ITEM_COOKIES, Info.SESSIONID):
             if Info.cf.get(Info.CONFIG_ITEM_COOKIES, Info.SESSIONID):
                 Info.is_login = True  # 从.ini文件中找到了cookie,则认为已登录
                 cook = { Info.SESSIONID: Info.cf.get(Info.CONFIG_ITEM_COOKIES, Info.SESSIONID) }
                 Info.cookies.append(cook)
+
+def rm_cookie():
+    if Info.cf.has_section(Info.CONFIG_ITEM_COOKIES):
+        if Info.cf.has_option(Info.CONFIG_ITEM_COOKIES, Info.SESSIONID):
+            Info.cf.remove_option(Info.CONFIG_ITEM_COOKIES, Info.SESSIONID)
+
+                    
     
 
 
@@ -170,10 +200,12 @@ def parse_html_by_bs(html_str, p_url):
     elif url_course_score == p_url:
         # unicode类型
         print soup.find(id = "ctl00_contentParent_dgData").get_text(separator=u'  ') # strip=True
-    
     # 解析`考试信息`页面, 从中获取考试信息
     elif url_course_exam_info == p_url:
         print soup.find(id = "ctl00_contentParent_dgData").tr.td.get_text()
+    # 解析`登录日志`页面，从中获取登录日志
+    elif url_history == p_url:
+        print soup.find(id = "ctl00_contentParent_UpdatePanel2").get_text(separator=u'  ') 
 
 #TODO 用`xpath`解析各种html页面
 def parse_html_by_xpath(html_str, p_xpath):
@@ -199,6 +231,11 @@ def show_course_exam_info(session):
     print "=============== 考试信息 ==============="
     parse_html_by_bs(response.content, url_course_exam_info)
 
+# 登录历史
+def show_history(session):
+    response = session.get(url_history, headers = headers_query, timeout = Info.TIME_OUT, cookies=Info.cookies[0])
+    print "=============== 登录日志 ==============="
+    parse_html_by_bs(response.content, url_history)
 
 def login(session):
     global url_captcha
@@ -229,20 +266,19 @@ def login(session):
             save_cookies(cookie)    # 保存cookie
             print cookie
             return True
-        else:
-            print "[!] 登录失败 ! 状态码: %d" % r1.status_code
-            print "[!] 当前cookie为: %s" % Info.cookies
-            print "[!] 当前url为: %s" % str(r1.url)
-            print "\n"
+        else:  # 登录失败
+            bad_login(r1)
             return False
-            #exit(1)
-    else:
-        print "[!] 登录失败 ! 状态码: %d\n" % r1.status_code
-        print "[!] 当前cookie为: %s" % Info.cookies
-        print "[!] 当前url为: %s" % str(r1.url)
-        print "\n"
+    else:  # 登录失败
+        bad_login(r1)
         return False
-        #exit(1)
+
+def bad_login(response):
+    print "[!] 登录失败 ! 状态码: %d\n" % response.status_code
+    print "[!] 当前cookie为: %s" % Info.cookies
+    print "[!] 当前url为: %s" % str(response.url)
+    print "\n"
+    #exit(1)
 
 
 def main():
