@@ -21,7 +21,7 @@ from utils import color
 
 class Info():
 
-    version              = '2.6'
+    version              = '2.7'
     CONFIG_FILE          = 'config.ini'
     CONFIG_ITEM_INFO     = 'info'
     CONFIG_ITEM_COOKIES  = 'cookies'

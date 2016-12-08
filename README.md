@@ -1,4 +1,4 @@
-# 主要是用于学校研究生管理系统的自动登录
+# 学校研究生管理系统的自动登录
 YouTube地址：https://www.youtube.com/watch?v=K4LTgzm9G3w </br>
 秒拍视频：http://weibo.com/p/230444427857313e89770690bec69367024c29 </br>
 
@@ -14,7 +14,7 @@ username = XXXXX
 password = XXXXX
 ```
 
-## student-login-final.py
+## student_login.py
 通过Chrome/Firefox的开发者工具以及Burp Suite分析登录过程的HTTP通信细节，然后用python实现对目标网站在给定学号密码情况下的自动登录。</br>
 ## 思路
 分析整个HTTP通信过程。实际用浏览器登录时由于有各种css/js/png文件，还有像WebResource.axd，ScriptResource.axd这种让你迷惑不知重不重要的文件。通过分析和实验，发现主要有三个HTTP请求。</br>
@@ -30,7 +30,10 @@ password = XXXXX
 - **bs4.BeautifulSoup**: 解析xml/html的库。这里用于查找hidden的*__VIEWSTATE* 和 *EVENTVALIDATION*。也可用lxml或者正则re。
 
 ## TODO
-- 优化登录失败的逻辑
-- 更精确地解析出有效信息(xpath或re)
-- 首次登录后保存cookie到本地供下次用，用一个session维持一次查询全过程
-- 打印出用户可查询的信息选项供用户选择
+- (Done)优化登录失败的逻辑(通过循环重试登录)
+- (Done)更精确地解析出有效信息(xpath或re, 用bs4足够)
+- (Done)首次登录后保存cookie到本地供下次用，用一个session维持一次查询全过程
+- (Done)打印出用户可查询的信息选项供用户选择
+
+## Added
+- 为了session保活，通过判断.ini文件的访问时间与当前时间对比，若超过一定超时时间，则重新登录；若未超过超时时间则重用该cookie
