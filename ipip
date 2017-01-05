@@ -30,9 +30,14 @@ def parse_html_by_bs(html_str):
   return soup.find(id='myself').get_text()
 
 s = requests.Session()
+payload = ''
 
-payload = 'ip=' + sys.argv[1]
+try:
+  payload = 'ip=' + sys.argv[1]
+except IndexError as e:
+  print "[!] 未输入查询IP, 直接返回当前IP"
 
 r = s.post(url, data=payload, headers=header)
 print parse_html_by_bs(r.content)
-
+# 最后关闭掉session
+s.close()
