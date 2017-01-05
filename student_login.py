@@ -151,8 +151,6 @@ def rm_cookie():
         if Info.cf.has_option(Info.CONFIG_ITEM_COOKIES, Info.SESSIONID):
             Info.cf.remove_option(Info.CONFIG_ITEM_COOKIES, Info.SESSIONID)
 
-                    
-    
 
 
 def save_img_to_file_and_get_result(imageUrl, filename):
@@ -190,9 +188,10 @@ def parse_html_by_bs(html_str, p_url):
     if url_loging == p_url:
         __VIEWSTATE         = soup.find(id = "__VIEWSTATE")['value']
         __EVENTVALIDATION   = soup.find(id = "__EVENTVALIDATION")['value']
+        __VIEWSTATEGENERATOR= soup.find(id = "__VIEWSTATEGENERATOR")['value']
         _validatecode_url   = soup.find(id = "ctl00_contentParent_ValidateImage")['src']
 
-        return __VIEWSTATE, __EVENTVALIDATION, _validatecode_url
+        return __VIEWSTATE, __EVENTVALIDATION, __VIEWSTATEGENERATOR, _validatecode_url
     # 解析`已选课程`页面, 从中获取已选课程的内容
     elif url_course_selected == p_url:
         print soup.find(id = "ctl00_contentParent_dgData").get_text(separator=u'  ')  # strip=True
@@ -242,7 +241,7 @@ def login(session):
 
     # 先GET到`登录页面`
     r0 = s.get(url_loging, headers = headers_get, timeout = Info.TIME_OUT)
-    VIEWSTATE, EVENTVALIDATION, url_captcha_tmp = parse_html_by_bs(r0.content, url_loging)
+    VIEWSTATE, EVENTVALIDATION, VIEWSTATEGENERATOR, url_captcha_tmp = parse_html_by_bs(r0.content, url_loging)
     # 分割出从页面中得到的参数并将其连接到验证码的url上去
     url_captcha = url_captcha + "?" + url_captcha_tmp.split('?')[1]
 
@@ -254,8 +253,7 @@ def login(session):
     print "[*] 验证码: %s" % _result_captcha
 
     # 将解析到的结果告诉url_payload
-    payload = '__EVENTTARGET=ctl00$contentParent$btLogin&__EVENTARGUMENT=&__VIEWSTATE='+ VIEWSTATE+ '&' +'__EVENTVALIDATION='+ EVENTVALIDATION + '&' +'ctl00$contentParent$UserName='+ Info._username + '&' +'ctl00$contentParent$PassWord='+ Info._password + '&' +'ctl00$contentParent$ValidateCode='+ _result_captcha
-
+    payload = '__EVENTTARGET=ctl00$contentParent$btLogin&__EVENTARGUMENT=&__VIEWSTATE='+ VIEWSTATE+ '&' + '__VIEWSTATEGENERATOR=' + VIEWSTATEGENERATOR +'&' + '__EVENTVALIDATION='+ EVENTVALIDATION + '&' +'ctl00$contentParent$UserName='+ Info._username + '&' +'ctl00$contentParent$PassWord='+ Info._password + '&' +'ctl00$contentParent$ValidateCode='+ _result_captcha
     # 登录
     r1 = s.post(url_relogin, data = payload, headers = headers_post, timeout = Info.TIME_OUT)
     if r1.status_code == 200:
