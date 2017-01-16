@@ -14,6 +14,8 @@ import pytesseract
 from PIL import Image
 from bs4 import BeautifulSoup
 import lxml.html
+# import lxml.etree #用于lxml来代替bs解析
+## 参考：http://cangfengzhe.github.io/python/python-lxml.html
 
 from url import *
 from headers import *
@@ -50,6 +52,7 @@ def print_help(version):
     print " --course-score || -s          Show the scores of all your courses."
     print " --course-exam-info || -i      Show your exam info of this semester, if any."
     print " --help || -h                  Print this help message."
+    sys.exit(1)   # 1表示非正常退出；0表示正常退出（没有错误）
 
 
 def print_options():
