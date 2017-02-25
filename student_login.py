@@ -65,6 +65,23 @@ def print_options():
     print
     print "[*] 请输入对应的序号, 以进行相应的查询! 查询完成后按 [Q/q] 退出 \n"
     
+def read_config():
+	'''
+	读取ini文件中的配置信息
+	'''
+	try:
+	    # 创建SafeConfigParser对象
+	    config = ConfigParser.SafeConfigParser()
+	    # 获得当前路径接着读取配置文件
+	    config.read(os.path.dirname(os.path.abspath(__file__)) + '/config.ini')
+	    # 获取配置文件中的字段
+	    user = config.get('Info','UserID')
+	    pwd = config.get('Info','PassWord') 
+	except ConfigParser.NoSectionError as e:
+	    print u'[!] Error：用户信息未配置，请将您的学号和密码填入UserInfo.ini文件'
+	    while True:
+	        pass
+
 
 def get_input():
     # print后面加逗号可以不换行
@@ -128,9 +145,9 @@ def is_internet_on():
     except socket.error as e: 
         type, value, traceback = sys.exc_info()[:3] 
         if type == socket.timeout: 
-            print u"socket.timeout错误" 
+            print u"[!] socket.timeout错误" 
         else: 
-            print u"其他socket错误"
+            print u"[!] 其他socket错误"
     return False
 
 def is_intranet_on():
@@ -143,9 +160,9 @@ def is_intranet_on():
     except socket.error as e: 
         type, value, traceback = sys.exc_info()[:3] 
         if type == socket.timeout: 
-            print u"socket.timeout错误" 
+            print u"[!] socket.timeout错误" 
         else: 
-            print u"其他socket错误"
+            print u"[!] 其他socket错误"
     return False
 
 
