@@ -16,4 +16,4 @@
 	}, "json");
 })(0.70);
 
-<!-- from https://i.congm.in/xpj/ -->
+/* from https://i.congm.in/xpj/ */
