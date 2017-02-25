@@ -14,7 +14,7 @@ import pytesseract
 from PIL import Image
 from bs4 import BeautifulSoup
 import lxml.html
-# import lxml.etree #用于lxml来代替bs解析
+import lxml.etree #用lxml来代替bs解析
 ## 参考：http://cangfengzhe.github.io/python/python-lxml.html
 
 from url import *
@@ -118,6 +118,36 @@ def parse_cmd():
         print "[!] 请检查参数个数, 输入 --help 或者 -h查看帮助信息"
         exit(1)
 
+def is_internet_on():
+	'''
+	判断是否能访问互联网
+	'''
+    try:
+        response = requests.get('http://www.baidu.com',timeout = 3) 
+        return True
+    except socket.error as e: 
+        type, value, traceback = sys.exc_info()[:3] 
+        if type == socket.timeout: 
+            print u"socket.timeout错误" 
+        else: 
+            print u"其他socket错误"
+    return False
+
+def is_intranet_on():
+	'''
+	判断能否访问内网
+	'''
+    try:
+        response = requests.get('http://202.202.43.125',timeout = 3) 
+        return True
+    except socket.error as e: 
+        type, value, traceback = sys.exc_info()[:3] 
+        if type == socket.timeout: 
+            print u"socket.timeout错误" 
+        else: 
+            print u"其他socket错误"
+    return False
+
 
 def load_info_from_ini():
     '''
@@ -214,6 +244,8 @@ def parse_html_by_xpath(html_str, p_xpath):
     html_xpathed = lxml.html.document_fromstring(html_str).xpath(p_xpath)
     print html_xpathed
 
+def parse_html_by_lxml(html_str, p_xpath):
+	root = lxml.html.fromstring(html_str)
 
 # 已选课程查询
 def show_course_selected(session):
