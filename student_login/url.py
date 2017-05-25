@@ -6,7 +6,7 @@ url_course_exam_info: 学期考试信息查询
 url_history         : 登录历史
 '''
 
-url_base     = "http://gs.cqupt.edu.cn:8080"
+url_base     = "http://gs.cqupt.edu.cn"
 
 url_captcha  = url_base + "/Public/ValidateCode.aspx"
 url_loging   = url_base + "/gstudent/loging.aspx?undefined"

@@ -19,41 +19,27 @@ import lxml.etree #用lxml来代替bs解析
 
 from url import *
 from headers import *
-from utils import color
+from utils import color, banner
+# 前面的logger是logger.py, 后面的logger是logger对象
+from logger import logger
 
 class Info():
 
     version              = '2.7'
     CONFIG_FILE          = 'config.ini'
     CONFIG_ITEM_INFO     = 'info'
-    CONFIG_ITEM_COOKIES  = 'cookies'
-    SESSIONID            = 'ASP.NET_SessionId'
-    _username            = ''
-    _password            = ''
-    _sessionId           = ''
-    _result_captcha      = ''
-    cf = ConfigParser.ConfigParser()
+    username            = ''
+    password            = ''
+    result_captcha      = ''
 
     file_captcha         = 'captcha.png'
-    _COOKIE_TIME_OUT     = 120     # cookie连续使用时间间隔 s
     TIME_OUT             = 10      # for requests, 单位s
     is_login             = False   # 判断是否已登录
-    cookies              = []
 
-# 开始就用一个session来维持整个回话，这样在之后请求中可以沿用之前的headers，
-# 而且可以往headers里添加已有的字段以覆盖之前的字段，这样connection才是 *keep-alive*，而不是*close*
+
+cf = ConfigParser.ConfigParser()
+
 s = requests.Session()
-
-def print_help(version):
-    print "-------------------------------------"
-    print "[*] student-login v{} by CaiQiqi :)".format(Info.version)
-    print
-    print " --course-selected || -c       Show courses you have already selected in this semester."
-    print " --course-score || -s          Show the scores of all your courses."
-    print " --course-exam-info || -i      Show your exam info of this semester, if any."
-    print " --help || -h                  Print this help message."
-    sys.exit(1)   # 1表示非正常退出；0表示正常退出（没有错误）
-
 
 def print_options():
     print
@@ -64,23 +50,6 @@ def print_options():
     print
     print
     print "[*] 请输入对应的序号, 以进行相应的查询! 查询完成后按 [Q/q] 退出 \n"
-    
-def read_config():
-	'''
-	读取ini文件中的配置信息
-	'''
-	try:
-	    # 创建SafeConfigParser对象
-	    config = ConfigParser.SafeConfigParser()
-	    # 获得当前路径接着读取配置文件
-	    config.read(os.path.dirname(os.path.abspath(__file__)) + '/config.ini')
-	    # 获取配置文件中的字段
-	    user = config.get('Info','UserID')
-	    pwd = config.get('Info','PassWord') 
-	except ConfigParser.NoSectionError as e:
-	    print u'[!] Error：用户信息未配置，请将您的学号和密码填入UserInfo.ini文件'
-	    while True:
-	        pass
 
 
 def get_input():
@@ -109,60 +78,37 @@ def get_input():
         elif cmd == "q" or cmd == "Q":
             exit(0)
     except Exception as e:
-        print "[!] Exception caught: {}".format(e)
-        #print "[!] 请输入可选的选项!"
+        logger.warning("[!] Exception caught: {}".format(e))
 
-def get_cookies():
-    return Info.cookies
-
-
-def parse_cmd():
-    try:
-        # 若没有参数，则什么也不做
-        if not sys.argv[1]:
-            pass
-
-        if sys.argv[1] == "--course-selected" or sys.argv[1] == "-c":
-            show_course_selected()
-        elif sys.argv[1] == "--course-score" or sys.argv[1] == "-s":
-            show_course_score()
-        elif sys.argv[1] == "--course-exam-info" or sys.argv[1] == "-i":
-            show_course_exam_info()
-        elif sys.argv[1] == "--help" or sys.argv[1] == "-h":
-            print_help(version)
-    # 若参数太多, 则抛出错误
-    except IndexError:
-        print "[!] 请检查参数个数, 输入 --help 或者 -h查看帮助信息"
-        exit(1)
 
 def is_internet_on():
-	'''
-	判断是否能访问互联网
-	'''
+    '''
+    判断是否能访问互联网
+    '''
     try:
         response = requests.get('http://www.baidu.com',timeout = 3) 
         return True
     except socket.error as e: 
         type, value, traceback = sys.exc_info()[:3] 
         if type == socket.timeout: 
-            print u"[!] socket.timeout错误" 
+            logger.error( u"[!] socket.timeout错误" )
         else: 
-            print u"[!] 其他socket错误"
+            logger.error( u"[!] 其他socket错误")
     return False
 
 def is_intranet_on():
-	'''
-	判断能否访问内网
-	'''
+    '''
+    判断能否访问内网
+    '''
     try:
         response = requests.get('http://202.202.43.125',timeout = 3) 
         return True
     except socket.error as e: 
         type, value, traceback = sys.exc_info()[:3] 
         if type == socket.timeout: 
-            print u"[!] socket.timeout错误" 
+            logger.error( u"[!] socket.timeout错误" )
         else: 
-            print u"[!] 其他socket错误"
+            logger.error( u"[!] 其他socket错误")
     return False
 
 
@@ -170,37 +116,10 @@ def load_info_from_ini():
     '''
     从.ini文件中载入账户密码信息
     '''
-    is_cookie_timeout = False
-    print "[*] 文件访问时间: %s" \
-        %(time.ctime(os.stat(Info.CONFIG_FILE).st_atime))   # .st_mtime, .st_ctime
+    cf.read(Info.CONFIG_FILE)
 
-    time_last = os.stat(Info.CONFIG_FILE).st_atime   # 上次访问时间
-    time_now  = time.time()
-    # 若距离上次访问时间超过一定时间，则清除cookie
-    if (time_now - time_last) > Info._COOKIE_TIME_OUT:
-        is_cookie_timeout = True
-    
-    Info.cf.read(Info.CONFIG_FILE)
-    if is_cookie_timeout:
-        print "[*] Removing cookies"
-        rm_cookie()
-
-    Info._username  = Info.cf.get(Info.CONFIG_ITEM_INFO, 'username')
-    Info._password  = d(d(d(Info.cf.get(Info.CONFIG_ITEM_INFO, 'password'))))
-
-    # 若从.ini文件中读cookie, 则认为该cookie有效(登录成功的)
-    if Info.cf.has_section(Info.CONFIG_ITEM_COOKIES):
-        if Info.cf.has_option(Info.CONFIG_ITEM_COOKIES, Info.SESSIONID):
-            if Info.cf.get(Info.CONFIG_ITEM_COOKIES, Info.SESSIONID):
-                Info.is_login = True  # 从.ini文件中找到了cookie,则认为已登录
-                cook = { Info.SESSIONID: Info.cf.get(Info.CONFIG_ITEM_COOKIES, Info.SESSIONID) }
-                Info.cookies.append(cook)
-
-def rm_cookie():
-    if Info.cf.has_section(Info.CONFIG_ITEM_COOKIES):
-        if Info.cf.has_option(Info.CONFIG_ITEM_COOKIES, Info.SESSIONID):
-            Info.cf.remove_option(Info.CONFIG_ITEM_COOKIES, Info.SESSIONID)
-
+    Info.username  = cf.get(Info.CONFIG_ITEM_INFO, 'username')
+    Info._password  = d(d(d(cf.get(Info.CONFIG_ITEM_INFO, 'password'))))
 
 
 def save_img_to_file_and_get_result(imageUrl, filename):
@@ -216,19 +135,9 @@ def save_img_to_file_and_get_result(imageUrl, filename):
         result = pytesseract.image_to_string(Image.open(filename))
         return result
     else:
-        print "[!] 解析验证码错误！\n"
+        logger.error( "[!] 解析验证码错误！\n")
         exit(1)
 
-def save_cookies(cook):
-    # 先将cookie加入到Info的cookies中, 可供本次运行脚本的其他时候使用
-    Info.cookies.append(cook)
-    # 确保有cookies这个section
-    if not Info.cf.has_section(Info.CONFIG_ITEM_COOKIES):
-        Info.cf.add_section(Info.CONFIG_ITEM_COOKIES)
-    Info.cf.set(Info.CONFIG_ITEM_COOKIES, Info.SESSIONID, cook[Info.SESSIONID])
-    # 写入到该.ini文件, 以便以后再次运行该脚本可以从文件中读入
-    with open(Info.CONFIG_FILE, "w+") as f:
-        Info.cf.write(f)
 
 # 用`BeautifulSoup`解析各种html页面
 def parse_html_by_bs(html_str, p_url):
@@ -266,25 +175,25 @@ def parse_html_by_lxml(html_str, p_xpath):
 
 # 已选课程查询
 def show_course_selected(session):
-    response = session.get(url_course_selected, headers = headers_query, timeout = Info.TIME_OUT, cookies=Info.cookies[0])
+    response = session.get(url_course_selected, headers = headers_query, timeout = Info.TIME_OUT)
     print "=============== 已选课程 ==============="
     parse_html_by_bs(response.content, url_course_selected)
 
 # 课程成绩查询
 def show_course_score(session):
-    response = session.get(url_course_score, headers = headers_query, timeout = Info.TIME_OUT, cookies=Info.cookies[0])
+    response = session.get(url_course_score, headers = headers_query, timeout = Info.TIME_OUT)
     print "=============== 课程成绩 ==============="
     parse_html_by_bs(response.content, url_course_score)
 
 # 学期考试信息查询
 def show_course_exam_info(session):
-    response = session.get(url_course_exam_info, headers = headers_query, timeout = Info.TIME_OUT, cookies=Info.cookies[0])
+    response = session.get(url_course_exam_info, headers = headers_query, timeout = Info.TIME_OUT)
     print "=============== 考试信息 ==============="
     parse_html_by_bs(response.content, url_course_exam_info)
 
 # 登录历史
 def show_history(session):
-    response = session.get(url_history, headers = headers_query, timeout = Info.TIME_OUT, cookies=Info.cookies[0])
+    response = session.get(url_history, headers = headers_query, timeout = Info.TIME_OUT)
     print "=============== 登录日志 ==============="
     parse_html_by_bs(response.content, url_history)
 
@@ -298,23 +207,20 @@ def login(session):
     url_captcha = url_captcha + "?" + url_captcha_tmp.split('?')[1]
 
     # 从向这个url发出请求,然后将得到的图片保存到本地，最后解析图片成文字
-    _result_captcha = save_img_to_file_and_get_result(url_captcha, Info.file_captcha)
-    if not _result_captcha:
-        print "[!] 验证码获取或解析失败 !"
+    result_captcha = save_img_to_file_and_get_result(url_captcha, Info.file_captcha)
+    if not result_captcha:
+        logger.error( "[!] 验证码获取或解析失败 !")
         exit(1)
-    print "[*] 验证码: %s" % _result_captcha
+    logger.info( "[*] 验证码: %s" % result_captcha)
 
     # 将解析到的结果告诉url_payload
-    payload = '__EVENTTARGET=ctl00$contentParent$btLogin&__EVENTARGUMENT=&__VIEWSTATE='+ VIEWSTATE+ '&' + '__VIEWSTATEGENERATOR=' + VIEWSTATEGENERATOR +'&' + '__EVENTVALIDATION='+ EVENTVALIDATION + '&' +'ctl00$contentParent$UserName='+ Info._username + '&' +'ctl00$contentParent$PassWord='+ Info._password + '&' +'ctl00$contentParent$ValidateCode='+ _result_captcha
+    payload = '__EVENTTARGET=ctl00$contentParent$btLogin&__EVENTARGUMENT=&__VIEWSTATE='+ VIEWSTATE+ '&' + '__VIEWSTATEGENERATOR=' + VIEWSTATEGENERATOR +'&' + '__EVENTVALIDATION='+ EVENTVALIDATION + '&' +'ctl00$contentParent$UserName='+ Info.username + '&' +'ctl00$contentParent$PassWord='+ Info.password + '&' +'ctl00$contentParent$ValidateCode='+ result_captcha
     # 登录
     r1 = s.post(url_relogin, data = payload, headers = headers_post, timeout = Info.TIME_OUT)
     if r1.status_code == 200:
         # 只有返回页面的url跟 `url_loging` 一样, 才是登录成功
         if str(r1.url) == url_loging:
-            print "[*] 登录成功 !\n"
-            cookie = s.cookies.get_dict()
-            save_cookies(cookie)    # 保存cookie
-            print cookie
+            logger.info( "[*] 登录成功 !\n")
             return True
         else:  # 登录失败
             bad_login(r1)
@@ -324,30 +230,28 @@ def login(session):
         return False
 
 def bad_login(response):
-    print "[!] 登录失败 ! 状态码: %d\n" % response.status_code
-    print "[!] 当前cookie为: %s" % Info.cookies
-    print "[!] 当前url为: %s" % str(response.url)
-    print "\n"
+    logger.info( "[!] 登录失败 ! 状态码: %d\n" % response.status_code)
+    logger.info ("[!] 当前url为: %s\n" % str(response.url))
     #exit(1)
 
 
 def main():
     load_info_from_ini()  # 从ini文件中解析出账号密码信息
-    print(Info._username)
 
     # 若未登录，则循环进行登录操作
     while not Info.is_login:
         time.sleep(3)
-        print "[!] 未登录"
-        print "[*] 正在登录..."
+        logger.info( "[!] 未登录")
+        logger.info ("[*] 正在登录...")
         Info.is_login = login(s)
+        if Info.is_login:
+            break
 
-    if Info.cookies:
-        print "[*] 已登录"
-        #parse_cmd()      # 解析命名行参数
-        print_options()   # 打印可用选项
-        get_input()       # 解析用户输入
+    logger.info( "[*] 已登录")
+    print_options()   # 打印可用选项
+    get_input()       # 解析用户输入
 
 
 if __name__ == "__main__":
+    logger.info( banner(Info.version))
     main()
