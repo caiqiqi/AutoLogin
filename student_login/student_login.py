@@ -14,11 +14,11 @@ import pytesseract
 from PIL import Image
 from bs4 import BeautifulSoup
 import lxml.html
-import lxml.etree #用lxml来代替bs解析
-## 参考：http://cangfengzhe.github.io/python/python-lxml.html
+import lxml.etree
+## 参考：用lxml来代替bs解析     http://cangfengzhe.github.io/python/python-lxml.html
+## 参考：Python爬虫解析实战例子 http://www.imooc.com/article/16025?block_id=tuijian_wz 
 
-from url import *
-from headers import *
+from constant import *
 from utils import color, banner
 # 前面的logger是logger.py, 后面的logger是logger对象
 from logger import logger
@@ -33,7 +33,7 @@ class Info():
     result_captcha      = ''
 
     file_captcha         = 'captcha.png'
-    TIME_OUT             = 10      # for requests, 单位s
+    TIME_OUT             = 30      # for requests, 单位s
     is_login             = False   # 判断是否已登录
 
 
@@ -78,7 +78,7 @@ def get_input():
         elif cmd == "q" or cmd == "Q":
             exit(0)
     except Exception as e:
-        logger.warning("[!] Exception caught: {}".format(e))
+        logger.warning("Exception caught: {}".format(e))
 
 
 def is_internet_on():
@@ -86,14 +86,14 @@ def is_internet_on():
     判断是否能访问互联网
     '''
     try:
-        response = requests.get('http://www.baidu.com',timeout = 3) 
+        response = requests.get('http://www.baidu.com',timeout = Info.TIME_OUT) 
         return True
     except socket.error as e: 
         type, value, traceback = sys.exc_info()[:3] 
         if type == socket.timeout: 
-            logger.error( u"[!] socket.timeout错误" )
+            logger.error( u"socket.timeout错误" )
         else: 
-            logger.error( u"[!] 其他socket错误")
+            logger.error( u"其他socket错误")
     return False
 
 def is_intranet_on():
@@ -101,14 +101,14 @@ def is_intranet_on():
     判断能否访问内网
     '''
     try:
-        response = requests.get('http://202.202.43.125',timeout = 3) 
+        response = requests.get('http://202.202.43.125',timeout = Info.TIME_OUT) 
         return True
     except socket.error as e: 
         type, value, traceback = sys.exc_info()[:3] 
         if type == socket.timeout: 
-            logger.error( u"[!] socket.timeout错误" )
+            logger.error( u"socket.timeout错误" )
         else: 
-            logger.error( u"[!] 其他socket错误")
+            logger.error( u"其他socket错误")
     return False
 
 
@@ -119,7 +119,7 @@ def load_info_from_ini():
     cf.read(Info.CONFIG_FILE)
 
     Info.username  = cf.get(Info.CONFIG_ITEM_INFO, 'username')
-    Info._password  = d(d(d(cf.get(Info.CONFIG_ITEM_INFO, 'password'))))
+    Info.password  = d(d(d(cf.get(Info.CONFIG_ITEM_INFO, 'password'))))
 
 
 def save_img_to_file_and_get_result(imageUrl, filename):
@@ -135,35 +135,39 @@ def save_img_to_file_and_get_result(imageUrl, filename):
         result = pytesseract.image_to_string(Image.open(filename))
         return result
     else:
-        logger.error( "[!] 解析验证码错误！\n")
+        logger.error( "解析验证码错误！\n")
         exit(1)
 
 
 # 用`BeautifulSoup`解析各种html页面
-def parse_html_by_bs(html_str, p_url):
+def parse_html_by_bs(html_str, p_url, is_validatecode=False):
 
     soup = BeautifulSoup(html_str, "lxml")  # soup 就是BeautifulSoup处理格式化后的字符串
-    # 解析`loging`页面, 从中获取 1# VIEWSTATE, 2# EVENTVALIDATION, 3# 验证码带随机数字的url
-    if url_loging == p_url:
+    # 解析`loging`页面, 从中获取 1# __VIEWSTATE, __EVENTVALIDATION, __VIEWSTATEGENERATOR 2# 验证码带随机数字的url
+    if url_login_post == p_url or \
+      url_login_passwd_modi == p_url:
         __VIEWSTATE         = soup.find(id = "__VIEWSTATE")['value']
         __EVENTVALIDATION   = soup.find(id = "__EVENTVALIDATION")['value']
         __VIEWSTATEGENERATOR= soup.find(id = "__VIEWSTATEGENERATOR")['value']
-        _validatecode_url   = soup.find(id = "ctl00_contentParent_ValidateImage")['src']
-
-        return __VIEWSTATE, __EVENTVALIDATION, __VIEWSTATEGENERATOR, _validatecode_url
-    # 解析`已选课程`页面, 从中获取已选课程的内容
+        if is_validatecode:
+            _validatecode_url   = soup.find(id = "ValidateImage")['src']
+            return __VIEWSTATE, __EVENTVALIDATION, __VIEWSTATEGENERATOR, _validatecode_url
+        else:
+        	return __VIEWSTATE, __EVENTVALIDATION, __VIEWSTATEGENERATOR
+    # 已选课程  从中获取已选课程的内容
     elif url_course_selected == p_url:
         print soup.find(id = "ctl00_contentParent_dgData").get_text(separator=u'  ')  # strip=True
-    # 解析`课程成绩`页面, 从中获取各科成绩
+    # 课程成绩  从中获取各科成绩
     elif url_course_score == p_url:
         # unicode类型
         print soup.find(id = "ctl00_contentParent_dgData").get_text(separator=u'  ') # strip=True
-    # 解析`考试信息`页面, 从中获取考试信息
+    # 考试信息  从中获取考试信息
     elif url_course_exam_info == p_url:
         print soup.find(id = "ctl00_contentParent_dgData").tr.td.get_text()
-    # 解析`登录日志`页面，从中获取登录日志
+    # 登录日志  从中获取登录日志
     elif url_history == p_url:
         print soup.find(id = "ctl00_contentParent_UpdatePanel2").get_text(separator=u'  ') 
+
 
 #TODO 用`xpath`解析各种html页面
 def parse_html_by_xpath(html_str, p_xpath):
@@ -201,37 +205,70 @@ def login(session):
     global url_captcha
 
     # 先GET到`登录页面`
-    r0 = s.get(url_loging, headers = headers_get, timeout = Info.TIME_OUT)
-    VIEWSTATE, EVENTVALIDATION, VIEWSTATEGENERATOR, url_captcha_tmp = parse_html_by_bs(r0.content, url_loging)
+    r0 = session.get(url_login_post, headers = headers_get, timeout = Info.TIME_OUT)
+    VIEWSTATE, EVENTVALIDATION, VIEWSTATEGENERATOR, url_captcha_tmp = parse_html_by_bs(r0.content, url_login_post, True)
     # 分割出从页面中得到的参数并将其连接到验证码的url上去
     url_captcha = url_captcha + "?" + url_captcha_tmp.split('?')[1]
 
     # 从向这个url发出请求,然后将得到的图片保存到本地，最后解析图片成文字
     result_captcha = save_img_to_file_and_get_result(url_captcha, Info.file_captcha)
     if not result_captcha:
-        logger.error( "[!] 验证码获取或解析失败 !")
+        logger.error( "验证码获取或解析失败 !")
         exit(1)
-    logger.info( "[*] 验证码: %s" % result_captcha)
+    logger.info( "验证码: %s" % result_captcha)
 
     # 将解析到的结果告诉url_payload
-    payload = '__EVENTTARGET=ctl00$contentParent$btLogin&__EVENTARGUMENT=&__VIEWSTATE='+ VIEWSTATE+ '&' + '__VIEWSTATEGENERATOR=' + VIEWSTATEGENERATOR +'&' + '__EVENTVALIDATION='+ EVENTVALIDATION + '&' +'ctl00$contentParent$UserName='+ Info.username + '&' +'ctl00$contentParent$PassWord='+ Info.password + '&' +'ctl00$contentParent$ValidateCode='+ result_captcha
+    payload = 'ScriptManager1=UpdatePanel2%7CbtLogin' + \
+        '&' +'__EVENTTARGET=btLogin' + \
+        '&' + '__EVENTARGUMENT=&__LASTFOCUS=&__VIEWSTATE='+ VIEWSTATE + \
+        '&' + '__VIEWSTATEGENERATOR=' + VIEWSTATEGENERATOR + \
+        '&' + '__EVENTVALIDATION='+ EVENTVALIDATION + \
+        '&' + 'UserName='+ Info.username + \
+        '&' + 'PassWord='+ Info.password + \
+        '&' + 'ValidateCode='+ result_captcha + \
+        '&' + 'drpLoginType=1&__ASYNCPOST=true&'
     # 登录
-    r1 = s.post(url_relogin, data = payload, headers = headers_post, timeout = Info.TIME_OUT)
+    r1 = session.post(url_login_post, data = payload, headers = headers_post, timeout = Info.TIME_OUT)
     if r1.status_code == 200:
-        # 只有返回页面的url跟 `url_loging` 一样, 才是登录成功
-        if str(r1.url) == url_loging:
-            logger.info( "[*] 登录成功 !\n")
+        # 只有返回页面的url跟 `url_login_post` 一样, 才是登录成功
+        #if str(r1.url) == url_login_post:
+            logger.debug( r1.url )
+            logger.debug( r1.content)
+            logger.info( "登录成功 !\n")
             return True
-        else:  # 登录失败
-            bad_login(r1)
-            return False
+        #else:  # 登录失败
+           # bad_login(r1)
+           # return False
     else:  # 登录失败
         bad_login(r1)
         return False
 
+def change_passwd(session):
+    # 先GET到`登录密码修改页面`
+    r0 = session.get(url_login_passwd_modi, \
+    	headers = headers_get, timeout = Info.TIME_OUT)
+    VIEWSTATE, EVENTVALIDATION, VIEWSTATEGENERATOR = parse_html_by_bs(r0.content, url_login_passwd_modi)
+
+    password1 = raw_input("请输入密码: ")
+    password2 = raw_input("请再次输入密码: ")
+	
+    payload = 'ctl00%24ScriptManager1=ctl00%24ScriptManager1%7Cctl00%24contentParent%24lnkSave' + \
+	    '&' + '__EVENTTARGET=ctl00%24contentParent%24lnkSave' + \
+	    '&' + '__EVENTARGUMENT=' + \
+	    '&' + '__VIEWSTATE=' + VIEWSTATE + \
+	    '&' + '__VIEWSTATEGENERATOR=' + VIEWSTATEGENERATOR + \
+	    '&' + '__EVENTVALIDATION='+ EVENTVALIDATION + \
+	    'ctl00%24contentParent%24txtLoginname=' + Info.username + \
+	    '&' + 'ctl00%24contentParent%24txtpassword1=' + password1 + \
+	    '&' + 'ctl00%24contentParent%24txtpassword2=' + password2 + \
+	    '&' + '__ASYNCPOST=true&'
+	# 提交修改
+    r1 = session.post(url_login_passwd_modi, \
+    	data = payload, headers = headers_edit_passwd_post, timeout = Info.TIME_OUT)
+
 def bad_login(response):
-    logger.info( "[!] 登录失败 ! 状态码: %d\n" % response.status_code)
-    logger.info ("[!] 当前url为: %s\n" % str(response.url))
+    logger.error( "登录失败 ! 状态码: %d\n" % response.status_code)
+    logger.info ("当前url为: %s\n" % str(response.url))
     #exit(1)
 
 
@@ -241,13 +278,12 @@ def main():
     # 若未登录，则循环进行登录操作
     while not Info.is_login:
         time.sleep(3)
-        logger.info( "[!] 未登录")
-        logger.info ("[*] 正在登录...")
+        logger.info ("正在登录...")
         Info.is_login = login(s)
         if Info.is_login:
             break
 
-    logger.info( "[*] 已登录")
+    logger.info( "已登录")
     print_options()   # 打印可用选项
     get_input()       # 解析用户输入
 
