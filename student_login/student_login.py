@@ -81,37 +81,6 @@ def get_input():
         logger.warning("Exception caught: {}".format(e))
 
 
-def is_internet_on():
-    '''
-    判断是否能访问互联网
-    '''
-    try:
-        response = requests.get('http://www.baidu.com',timeout = Info.TIME_OUT) 
-        return True
-    except socket.error as e: 
-        type, value, traceback = sys.exc_info()[:3] 
-        if type == socket.timeout: 
-            logger.error( u"socket.timeout错误" )
-        else: 
-            logger.error( u"其他socket错误")
-    return False
-
-def is_intranet_on():
-    '''
-    判断能否访问内网
-    '''
-    try:
-        response = requests.get('http://202.202.43.125',timeout = Info.TIME_OUT) 
-        return True
-    except socket.error as e: 
-        type, value, traceback = sys.exc_info()[:3] 
-        if type == socket.timeout: 
-            logger.error( u"socket.timeout错误" )
-        else: 
-            logger.error( u"其他socket错误")
-    return False
-
-
 def load_info_from_ini():
     '''
     从.ini文件中载入账户密码信息
